@@ -33,14 +33,14 @@
 
 int main()
 {
-	Game::TestApp testApp;
+	Game::GameApp gameApp;
 
-	if (testApp.Open())
+	if (gameApp.Open())
 	{
-		testApp.Run();
+		gameApp.Run();
 	}
 
-	testApp.Close();
+	gameApp.Close();
 
 	return 0;
 }

@@ -26,11 +26,11 @@
 
 namespace Game
 {
-	class TestApp
+	class GameApp
 	{
 	public:
-		TestApp();
-		~TestApp();
+		GameApp();
+		~GameApp();
 
 		bool Open();
 
@@ -39,6 +39,9 @@ namespace Game
 		bool Close();
 
 	private:
+
+		void RenderUI();
+
 		DISPLAY::Window* window;
 	};
 }

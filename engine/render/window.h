@@ -19,6 +19,7 @@
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 #include <iostream>
+#include <functional>
 
 /*
 * TODOS:
@@ -42,12 +43,35 @@ namespace DISPLAY
 		const bool IsOpen();
 
 		void Update();
+		void SwapBuffers();
 
 		bool ProcessInput(int32 key);
 
+		void setSize(int32 width, int32 height);
+		void setSize(glm::vec2 size);
+		glm::vec2 getSize();
+
+		void setTitle(std::string title);
+		std::string getTitle();
+
+		void SetUiRender(const std::function<void()>& func);
+
 	private:
+
+		void reSize(int32 width, int32 height);
+
+		static int32 WindowCount;
+
+		std::function<void()> uiFunc;
+
 		int32 width;
 		int32 height;
+		std::string title;
 		GLFWwindow* window;
 	};
+
+	inline void Window::SetUiRender(const std::function<void()>& func)
+	{
+		this->uiFunc = func;
+	}
 }

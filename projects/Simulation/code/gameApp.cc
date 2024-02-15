@@ -17,8 +17,12 @@
 
 #include "config.h"
 #include "gameApp.h"
+
+#include "imgui.h"
+
 #include <vector>
 #include <chrono>
+
 #include "render/RenderBasic.h"
 #include "render/shader.h"
 #include "render/camera.h"
@@ -27,25 +31,31 @@
 namespace Game
 {
 
-	TestApp::TestApp()
+	GameApp::GameApp()
 	{
 		//Empty
 	}
 
-	TestApp::~TestApp()
+	GameApp::~GameApp()
 	{
 		//Empty
 	}
 
-	bool TestApp::Open()
+	bool GameApp::Open()
 	{
-
 		this->window = new DISPLAY::Window;
+		/*this->window*/
 		if (window->Open())
 		{
+			//this->window->setSize(1280, 720);
+			this->window->setTitle("Fluid Sim");
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 
+			this->window->SetUiRender([this]()
+			{
+				this->RenderUI();
+			});
 
 			return true;
 		}
@@ -53,16 +63,16 @@ namespace Game
 		return false;
 	}
 
-	bool TestApp::Run()
+	bool GameApp::Run()
 	{
 		//PreWork
-		RenderUtils::Camera Cam(glm::vec3(0)); //Not fully implemented yet!
+		RenderUtils::Camera Cam(glm::vec3(0));
 
 		Shader shader = Shader("./shaders/VertexShader.vs", "./shaders/FragementShader.fs");
 
 		shader.Enable();
 
-		glm::mat4 perspect = Cam.GetPerspective(800, 600, 0.1f, 1000.0f);
+		glm::mat4 perspect = Cam.GetPerspective(1280, 720, 0.1f, 1000.0f);
 
 		glm::mat4 trans = glm::mat4(1.0f);
 		trans = glm::translate(glm::vec3(0.0f, 0.0f, -3.0f));
@@ -99,28 +109,29 @@ namespace Game
 				break;
 			}
 
-			if (this->window->ProcessInput(GLFW_KEY_W))
-			{
-				Cam.Move(RenderUtils::FORWARD, dt);
-			}
-			if (this->window->ProcessInput(GLFW_KEY_S))
-			{
-				Cam.Move(RenderUtils::BACKWARD, dt);
-			}
-			if (this->window->ProcessInput(GLFW_KEY_A))
-			{
-				Cam.Move(RenderUtils::LEFT, dt);
-			}
-			if (this->window->ProcessInput(GLFW_KEY_D))
-			{
-				Cam.Move(RenderUtils::RIGHT, dt);
-			}
-			view = perspect * Cam.GetViewMatrix() * trans;
+			//if (this->window->ProcessInput(GLFW_KEY_W))
+			//{
+			//	Cam.Move(RenderUtils::FORWARD, dt);
+			//}
+			//if (this->window->ProcessInput(GLFW_KEY_S))
+			//{
+			//	Cam.Move(RenderUtils::BACKWARD, dt);
+			//}
+			//if (this->window->ProcessInput(GLFW_KEY_A))
+			//{
+			//	Cam.Move(RenderUtils::LEFT, dt);
+			//}
+			//if (this->window->ProcessInput(GLFW_KEY_D))
+			//{
+			//	Cam.Move(RenderUtils::RIGHT, dt);
+			//}
+			//view = perspect * Cam.GetViewMatrix() * trans;
 
-			shader.setMat4("transform", view);
-			Cube.bindVAO();
-			Cube.renderMesh(0);
-			Cube.unBindVAO();
+			//shader.setMat4("transform", view);
+			//Cube.bindVAO();
+			//Cube.renderMesh(0);
+			//Cube.unBindVAO();
+			this->window->SwapBuffers();
 			this->window->Update();
 
 			auto timeEnd = std::chrono::steady_clock::now();
@@ -130,9 +141,28 @@ namespace Game
 		return true;
 	}
 
-	bool TestApp::Close()
+	bool GameApp::Close()
 	{
 		this->window->Close();
 		return true;
+	}
+
+	void GameApp::RenderUI()
+	{
+		if (this->window->IsOpen())
+		{
+			ImGui::Begin("Debug");
+
+			int fps = 1/60;
+			ImGui::Text("FPS: %i", fps);
+			ImGui::NewLine();
+			float ForceMulti = 0.0;
+			if (ImGui::SliderFloat("DEMO", &ForceMulti, 0.0f, 100.0f))
+			{
+				
+			}
+
+			ImGui::End();
+		}
 	}
 }
