@@ -1,6 +1,12 @@
 SET(files_physics
-	temp.cc
-	temp.h
+	physicsWorld.cc
+	physicsWorld.h
+	kernels.cc
+	kernels.h
+	spatialStruct.cc
+	spatialStruct.h
+	boundary.cc
+	boundary.h
     )
 SOURCE_GROUP("physics" FILES ${files_physics})
 	
