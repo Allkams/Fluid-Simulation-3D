@@ -1,5 +1,6 @@
-# SpectraWise-Engine
-This rendering engine is created using C++20, OpenGL, and managed with CMake. It is being developed as a YouTube series focused on learning the intricacies of rendering techniques. I invite you to follow along and witness the progress that will be achieved!
+# SPH Fluid Simulation 3D
+This is a repository for my 3D version of a SPH Langarian fluid simulation using my own rendering engine [SpectraWise-Engine](https://github.com/Allkams/SpectraWise-Engine). The implementation is using OpenGL 4.6.  
+My 2D implementation version can be found here: [Fluid-Simulation-2D](https://github.com/Allkams/Fluid-Simulation-2D)
 
 ## Table of Content
 - [Requirements](#table-of-content)
