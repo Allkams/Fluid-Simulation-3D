@@ -1,0 +1,18 @@
+# Todo list 
+- [X] Create the projects
+- [X] Make a window
+- [X] Make a simple triangle
+- [ ] Make a square and a cube.
+- [ ] Create a shader loader/compiler
+- [X] Add a GameApp
+- [ ] Create a core app
+- [ ] Make a OBJ loader
+- [ ] Make a GLTF loader
+- [ ] Create a camera system
+- [ ] Add an input manager
+- [ ] Include Lights
+- [ ] Make a forward renderer
+- [ ] Make a defered renderer
+- [ ] Make a cluster renderer
+- [ ] Make a ... Renderer
+- [ ] Add more todos
