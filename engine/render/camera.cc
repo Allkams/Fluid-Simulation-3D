@@ -46,7 +46,7 @@ namespace RenderUtils
 
 	glm::mat4 Camera::GetPerspective(float width, float height, float near, float far)
 	{
-		return glm::perspective(FOV, width / height, near, far);
+		return glm::perspective(90.0f, width / height, near, far);
 	}
 
 	void Camera::Move(CameraMovement direction, float deltaTime)

@@ -74,7 +74,8 @@ namespace Render
 	};
 
 	Mesh CreateTriangle(float32 width, float32 height);
-	Mesh CreatePlane();
+	Mesh CreatePlane(float32 width, float32 height);
+	Mesh CreateCircle(float32 radius, int numVertices);
 	Mesh CreateCube(float32 width, float32 height, float32 depth);
 	Mesh CreateSphere();
 	Mesh CreateCylinder();

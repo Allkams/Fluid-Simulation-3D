@@ -141,6 +141,18 @@ namespace DISPLAY
 			glViewport(0, 0, this->width, this->height);
 		}
 
+		glfwSetWindowUserPointer(this->window, this);
+		glfwSetKeyCallback(this->window, Window::StaticKeyPressCallback);
+		glfwSetMouseButtonCallback(this->window, Window::StaticMousePressCallback);
+		glfwSetCursorPosCallback(this->window, Window::StaticMouseMoveCallback);
+		glfwSetCursorEnterCallback(this->window, Window::StaticMouseEnterLeaveCallback);
+		glfwSetScrollCallback(this->window, Window::StaticMouseScrollCallback);
+		glfwSetWindowSizeCallback(this->window, Window::StaticWindowResizeCallback);
+		glfwSetWindowCloseCallback(window, Window::StaticCloseCallback);
+		glfwSetWindowFocusCallback(window, Window::StaticFocusCallback);
+		glfwSetCharCallback(window, Window::StaticCharCallback);
+		glfwSetDropCallback(window, Window::StaticDropCallback);
+
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = { (float)width, (float)height };
@@ -267,5 +279,131 @@ namespace DISPLAY
 			glfwSetWindowSize(this->window, width, height);
 			glViewport(0, 0, this->width, this->height);
 		}
+	}
+
+	void
+		Window::StaticKeyPressCallback(GLFWwindow* win, int32 key, int32 scancode, int32 action, int32 mods)
+	{
+		Window* window = (Window*)glfwGetWindowUserPointer(win);
+		if (ImGui::IsAnyItemHovered())
+		{
+			ImGui_ImplGlfw_KeyCallback(win, key, scancode, action, mods);
+		}
+		else if (nullptr != window->keyPressCallback)
+			window->keyPressCallback(key, scancode, action, mods);
+
+		//Input::InputHandler::HandleKeyEvent(key, scancode, action, mods);
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+	*/
+	void
+		Window::StaticMousePressCallback(GLFWwindow* win, int32 button, int32 action, int32 mods)
+	{
+		Window* window = (Window*)glfwGetWindowUserPointer(win);
+
+		ImGui_ImplGlfw_MouseButtonCallback(win, button, action, mods);
+
+		if (nullptr != window->mousePressCallback)
+			window->mousePressCallback(button, action, mods);
+
+		//Input::InputHandler::HandleMousePressEvent(button, action, mods);
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+	*/
+	void
+		Window::StaticMouseMoveCallback(GLFWwindow* win, float64 x, float64 y)
+	{
+		Window* window = (Window*)glfwGetWindowUserPointer(win);
+		if (nullptr != window->mouseMoveCallback)
+			window->mouseMoveCallback(x, y);
+		//Input::InputHandler::HandleMouseMoveEvent(x, y);
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+	*/
+	void
+		Window::StaticMouseEnterLeaveCallback(GLFWwindow* win, int32 mode)
+	{
+		Window* window = (Window*)glfwGetWindowUserPointer(win);
+		if (nullptr != window->mouseLeaveEnterCallback) window->mouseLeaveEnterCallback(mode == 0);
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+	*/
+	void
+		Window::StaticMouseScrollCallback(GLFWwindow* win, float64 x, float64 y)
+	{
+		Window* window = (Window*)glfwGetWindowUserPointer(win);
+		if (ImGui::IsAnyItemHovered())
+		{
+			ImGui_ImplGlfw_ScrollCallback(win, x, y);
+		}
+		else if (nullptr != window->mouseScrollCallback) window->mouseScrollCallback(x, y);
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+	*/
+	void
+		Window::StaticWindowResizeCallback(GLFWwindow* win, int32 x, int32 y)
+	{
+		Window* window = (Window*)glfwGetWindowUserPointer(win);
+		window->width = x;
+		window->height = y;
+		window->reSize(x,y);
+		if (nullptr != window->windowResizeCallback)
+			window->windowResizeCallback(x, y);
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+	*/
+	void
+		Window::StaticCloseCallback(GLFWwindow* window)
+	{
+		// FIXME: should be more graceful...
+		std::exit(0);
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+	*/
+	void
+		Window::StaticFocusCallback(GLFWwindow* window, int focus)
+	{
+		// empty for now
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+	*/
+	void
+		Window::StaticCharCallback(GLFWwindow* window, unsigned int key)
+	{
+		if (ImGui::IsAnyItemHovered())
+		{
+			ImGui_ImplGlfw_CharCallback(window, key);
+		}
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+	*/
+	void
+		Window::StaticDropCallback(GLFWwindow* window, int files, const char** args)
+	{
+		// empty for now
+	}
+
+	void
+		Window::GetMousePos(float64& x, float64& y)
+	{
+		glfwGetCursorPos(this->window, &x, &y);
 	}
 }

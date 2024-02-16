@@ -54,13 +54,57 @@ namespace DISPLAY
 		void setTitle(std::string title);
 		std::string getTitle();
 
+		void SetKeyPressFunction(const std::function<void(int32, int32, int32, int32)>& func);
+		/// set mouse press function callback
+		void SetMousePressFunction(const std::function<void(int32, int32, int32)>& func);
+		/// set mouse move function callback
+		void SetMouseMoveFunction(const std::function<void(double, double)>& func);
+		/// set mouse enter leave function callback
+		void SetMouseEnterLeaveFunction(const std::function<void(bool)>& func);
+		/// set mouse scroll function callback
+		void SetMouseScrollFunction(const std::function<void(double, double)>& func);
+		/// set window resize function callback
+		void SetWindowResizeFunction(const std::function<void(int32, int32)>& func);
+
 		void SetUiRender(const std::function<void()>& func);
 
+		void GetMousePos(float64& x, float64& y);
+
 	private:
+
+		/// static key press callback
+		static void StaticKeyPressCallback(GLFWwindow* win, int32 key, int32 scancode, int32 action, int32 mods);
+		/// static mouse press callback
+		static void StaticMousePressCallback(GLFWwindow* win, int32 button, int32 action, int32 mods);
+		/// static mouse move callback
+		static void StaticMouseMoveCallback(GLFWwindow* win, float64 x, float64 y);
+		/// static mouse enter/leave callback
+		static void StaticMouseEnterLeaveCallback(GLFWwindow* win, int32 mode);
+		/// static mouse scroll callback
+		static void StaticMouseScrollCallback(GLFWwindow* win, float64 x, float64 y);
+		/// static resize window callback
+		static void StaticWindowResizeCallback(GLFWwindow* win, int32 x, int32 y);
+
+		static void StaticCloseCallback(GLFWwindow* window);
+		static void StaticFocusCallback(GLFWwindow* window, int focus);
+		static void StaticCharCallback(GLFWwindow* window, unsigned int key);
+		static void StaticDropCallback(GLFWwindow* window, int files, const char** args);
 
 		void reSize(int32 width, int32 height);
 
 		static int32 WindowCount;
+
+		std::function<void(int32, int32, int32, int32)> keyPressCallback;
+		/// function for mouse press callbacks
+		std::function<void(int32, int32, int32)> mousePressCallback;
+		/// function for mouse move callbacks
+		std::function<void(double, double)> mouseMoveCallback;
+		/// function for mouse enter/leave callbacks
+		std::function<void(bool)> mouseLeaveEnterCallback;
+		/// function for mouse scroll callbacks
+		std::function<void(double, double)> mouseScrollCallback;
+		/// function for window resize callbacks
+		std::function<void(int32, int32)> windowResizeCallback;
 
 		std::function<void()> uiFunc;
 
@@ -69,6 +113,62 @@ namespace DISPLAY
 		std::string title;
 		GLFWwindow* window;
 	};
+
+	inline void
+		Window::SetKeyPressFunction(const std::function<void(int32, int32, int32, int32)>& func)
+	{
+		this->keyPressCallback = func;
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+		parameters:
+			button code
+			pressed (bool)
+			scancode?
+	*/
+	inline void
+		Window::SetMousePressFunction(const std::function<void(int32, int32, int32)>& func)
+	{
+		this->mousePressCallback = func;
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+		parameters: x, y position
+	*/
+	inline void
+		Window::SetMouseMoveFunction(const std::function<void(double, double)>& func)
+	{
+		this->mouseMoveCallback = func;
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+	*/
+	inline void
+		Window::SetMouseEnterLeaveFunction(const std::function<void(bool)>& func)
+	{
+		this->mouseLeaveEnterCallback = func;
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+	*/
+	inline void
+		Window::SetMouseScrollFunction(const std::function<void(double, double)>& func)
+	{
+		this->mouseScrollCallback = func;
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+	*/
+	inline void
+		Window::SetWindowResizeFunction(const std::function<void(int32, int32)>& func)
+	{
+		this->windowResizeCallback = func;
+	}
 
 	inline void Window::SetUiRender(const std::function<void()>& func)
 	{

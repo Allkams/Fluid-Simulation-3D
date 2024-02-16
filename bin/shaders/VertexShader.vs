@@ -6,10 +6,12 @@ layout (location=2) in vec2 texture;
 
 layout (location=0) out vec4 Color;
 
-uniform mat4 transform;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 project;
 
 void main()
 {
-	gl_Position = transform * vec4(aPos, 1.0f);
+	gl_Position = project * view * model * vec4(aPos, 1.0f);
 	Color = color;
 }

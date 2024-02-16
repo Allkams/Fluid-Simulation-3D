@@ -111,7 +111,63 @@ namespace Render
 		);
 	}
 	
-	Mesh CreatePlane(float32 width, float32 height);
+	Mesh CreatePlane(float32 width, float32 height)
+	{
+		float32 widthPos = width / 2.0f;
+		float32 heightPos = height / 2.0f;
+
+		//Face one
+		Vertice Point1 = Vertice(glm::vec3(widthPos, -heightPos, 0.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f));
+		Vertice Point2 = Vertice(glm::vec3(widthPos, heightPos, 0.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec2(1.0f, 0.0f));
+		Vertice Point3 = Vertice(glm::vec3(-widthPos, heightPos, 0.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), glm::vec2(0.0f, 0.0f));
+		Vertice Point4 = Vertice(glm::vec3(-widthPos, -heightPos, 0.0f), glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), glm::vec2(0.0f, 1.0f));
+
+		Primitive plane;
+		plane.startIndex = 0;
+		plane.numVertices = 5;
+
+		return Mesh(
+			{
+				Point1, Point2, Point3, Point4,
+			},
+			{
+				0,1,3,
+				1,2,3,
+			},
+			{
+				plane
+			});
+	}
+
+	Mesh CreateCircle(float32 radius, int numVertices)
+	{
+		std::vector<Vertice> vertices;
+		std::vector<GLuint> indices;
+		//Face one
+		for (int i = 0; i < numVertices * 3; ++i) {
+			float theta = 2.0f * glm::pi<float>() * static_cast<float>(i) / static_cast<float>(numVertices);
+			float x = radius * cos(theta);
+			float y = radius * sin(theta);
+			vertices.push_back(Vertice(glm::vec3(x, y, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec2(x / radius + 0.5f, y / radius + 0.5f)));
+		}
+
+		for (int i = 1; i <= numVertices * 3; ++i) {
+			indices.push_back(0);  // Center vertex
+			indices.push_back(i);  // Outer vertex
+			indices.push_back(i % numVertices + 1);  // Next outer vertex or first vertex if last
+		}
+
+		Primitive circle;
+		circle.startIndex = 0;
+		circle.numVertices = numVertices * 3;
+
+		return Mesh(
+			vertices,
+			indices,
+			{
+				circle
+			});
+	}
 
 	Mesh CreateCube(float32 width, float32 height, float32 depth)
 	{
@@ -120,10 +176,10 @@ namespace Render
 		float32 depthPos = depth / 2.0f;
 
 		//Face one
-		Vertice Point1 = Vertice(glm::vec3(widthPos, -heightPos, depthPos), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec2(0.0f, 0.0f));
+		Vertice Point1 = Vertice(glm::vec3(widthPos, -heightPos, depthPos), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec2(1.0f, 1.0f));
 		Vertice Point2 = Vertice(glm::vec3(widthPos, heightPos, depthPos), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec2(1.0f, 0.0f));
-		Vertice Point3 = Vertice(glm::vec3(-widthPos, heightPos, depthPos), glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), glm::vec2(0.5f, 1.0f));
-		Vertice Point4 = Vertice(glm::vec3(-widthPos, -heightPos, depthPos), glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), glm::vec2(0.5f, 1.0f));
+		Vertice Point3 = Vertice(glm::vec3(-widthPos, heightPos, depthPos), glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), glm::vec2(0.0f, 0.0f));
+		Vertice Point4 = Vertice(glm::vec3(-widthPos, -heightPos, depthPos), glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), glm::vec2(0.0f, 1.0f));
 
 		//Face two
 		Vertice Point5 = Vertice(glm::vec3(widthPos, -heightPos, -depthPos), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec2(0.0f, 0.0f));

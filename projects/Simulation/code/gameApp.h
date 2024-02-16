@@ -40,6 +40,10 @@ namespace Game
 
 	private:
 
+		float deltatime = 0;
+		int nrParticles;
+		int CurrentParticle = 0;
+
 		void RenderUI();
 
 		DISPLAY::Window* window;

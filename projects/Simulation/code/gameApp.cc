@@ -26,6 +26,7 @@
 #include "render/RenderBasic.h"
 #include "render/shader.h"
 #include "render/camera.h"
+#include "physics/physicsWorld.h"
 
 
 namespace Game
@@ -47,7 +48,7 @@ namespace Game
 		/*this->window*/
 		if (window->Open())
 		{
-			//this->window->setSize(1280, 720);
+			this->window->setSize(1920, 1080);
 			this->window->setTitle("Fluid Sim");
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
@@ -65,33 +66,44 @@ namespace Game
 
 	bool GameApp::Run()
 	{
+
+		glm::vec2 winSize = window->getSize();
 		//PreWork
 		RenderUtils::Camera Cam(glm::vec3(0));
+		nrParticles = 1024;
+		Physics::Fluid::FluidSimulation::getInstace().InitializeData(nrParticles);
 
 		Shader shader = Shader("./shaders/VertexShader.vs", "./shaders/FragementShader.fs");
-
 		shader.Enable();
 
-		glm::mat4 perspect = Cam.GetPerspective(1280, 720, 0.1f, 1000.0f);
+		glm::mat4 perspect = Cam.GetPerspective(winSize.x, winSize.y, 0.1f, 1000.0f);
 
 		glm::mat4 trans = glm::mat4(1.0f);
 		trans = glm::translate(glm::vec3(0.0f, 0.0f, -3.0f));
 
-		glm::mat4 view = perspect * Cam.GetViewMatrix() * trans;
+		glm::mat4 view = Cam.GetViewMatrix();
 
-		shader.setMat4("transform", view);
+		shader.setMat4("model", trans);
+		shader.setMat4("view", view);
+		shader.setMat4("project", perspect);
+		Render::Mesh plane = Render::CreateCircle(0.05f, 12);
+		Render::Mesh plane2 = Render::CreateCircle(0.35f, 12);
+		Render::Mesh plane3 = Render::CreatePlane(12, 8);
 
-		Render::Mesh triangle = Render::CreateTriangle(1.0f, 1.0f);
-		Render::Mesh Cube = Render::CreateCube(1.0f, 1.0f, 1.0f);
+		bool running = false;
 
 		glEnable(GL_DEPTH_TEST);
 
-		//Cam.FOV = 120.0f;
-		float dt = 0.016667f;
+		glm::vec4 red = { 1.0f, 0.0f, 0.0f, 1.0f };
+		glm::vec4 blue = { 0.0f, 0.0f, 1.0f, 1.0f };
+		std::vector<glm::vec4> colors;
+		colors.resize(nrParticles);
+
+		deltatime = 0.016667f;
 		while (this->window->IsOpen())
 		{
 			auto timeStart = std::chrono::steady_clock::now();
-			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+			glClearColor(0.4f, 0.0f, 0.8f, 1.0f);
 
 			// Accept fragment if it closer to the camera than the former one
 			glDepthFunc(GL_LESS);
@@ -101,6 +113,8 @@ namespace Game
 			if (this->window->ProcessInput(GLFW_KEY_F1))
 			{
 				shader.ReloadShader();
+				shader.Enable();
+				shader.setMat4("transform", view);
 			}
 
 			if (this->window->ProcessInput(GLFW_KEY_ESCAPE))
@@ -109,33 +123,56 @@ namespace Game
 				break;
 			}
 
-			//if (this->window->ProcessInput(GLFW_KEY_W))
-			//{
-			//	Cam.Move(RenderUtils::FORWARD, dt);
-			//}
-			//if (this->window->ProcessInput(GLFW_KEY_S))
-			//{
-			//	Cam.Move(RenderUtils::BACKWARD, dt);
-			//}
-			//if (this->window->ProcessInput(GLFW_KEY_A))
-			//{
-			//	Cam.Move(RenderUtils::LEFT, dt);
-			//}
-			//if (this->window->ProcessInput(GLFW_KEY_D))
-			//{
-			//	Cam.Move(RenderUtils::RIGHT, dt);
-			//}
-			//view = perspect * Cam.GetViewMatrix() * trans;
+			if (this->window->ProcessInput(GLFW_KEY_SPACE))
+			{
+				running = !running;
+			}
 
-			//shader.setMat4("transform", view);
-			//Cube.bindVAO();
-			//Cube.renderMesh(0);
-			//Cube.unBindVAO();
+			if (running)
+			{
+				Physics::PhysicsWorld::getInstace().update(deltatime);
+			}
+
+			for (int i = 0; i < nrParticles; i++)
+			{
+				float normalized = Physics::Fluid::FluidSimulation::getInstace().getSpeedNormalzied(i);
+				glm::vec4 color = (1.0f - normalized) * blue + normalized * red;
+				colors[i] = color;
+			}
+
+			for (int i = 0; i < nrParticles; i++)
+			{
+				shader.setVec4("color", colors[i]);
+
+				glm::mat4 trans = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(i), -3.0f));
+
+				shader.setMat4("model", trans);
+				plane.bindVAO();
+				plane.renderMesh(0);
+				plane.unBindVAO();
+			}
+
+			shader.setVec4("color", glm::vec4(0.3f, 0.0f, 0.0f, 0.2f));
+			glm::mat4 trans = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(CurrentParticle), -3.0f));
+			shader.setMat4("model", trans);
+			plane2.bindVAO();
+			plane2.renderMesh(0);
+			plane2.unBindVAO();
+
+			//BOUND
+			shader.setVec4("color", glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
+			trans = glm::translate(glm::vec3(0.0f,0.0f, -3.0f));
+			shader.setMat4("model", trans);
+
+			plane3.bindVAO();
+			plane3.renderMesh(0);
+			plane3.unBindVAO();
+
 			this->window->SwapBuffers();
 			this->window->Update();
 
 			auto timeEnd = std::chrono::steady_clock::now();
-			dt = std::chrono::duration<double>(timeEnd - timeStart).count();
+			deltatime = std::chrono::duration<double>(timeEnd - timeStart).count();
 		}
 
 		return true;
@@ -153,9 +190,28 @@ namespace Game
 		{
 			ImGui::Begin("Debug");
 
-			int fps = 1/60;
+			int fps = 1.0f/ deltatime;
 			ImGui::Text("FPS: %i", fps);
+			ImGui::Text("Particles: %i", nrParticles);
 			ImGui::NewLine();
+			int targetSphere = CurrentParticle;
+			if (ImGui::InputInt("Focus Particle", &targetSphere))
+			{
+				if (targetSphere >= nrParticles)
+				{
+					targetSphere = 0;
+				}
+				if (targetSphere <= -1)
+				{
+					targetSphere = nrParticles-1;
+				}
+				CurrentParticle = targetSphere;
+			}
+			ImGui::Text("  Position: (%f, %f)", Physics::Fluid::FluidSimulation::getInstace().getPosition(CurrentParticle).x, Physics::Fluid::FluidSimulation::getInstace().getPosition(CurrentParticle).y);
+			ImGui::Text("  Velocity: (%f, %f)", Physics::Fluid::FluidSimulation::getInstace().getVelocity(CurrentParticle).x, Physics::Fluid::FluidSimulation::getInstace().getVelocity(CurrentParticle).y);
+			ImGui::Text("  Density: (%f)", Physics::Fluid::FluidSimulation::getInstace().getDensity(CurrentParticle));
+
+
 			float ForceMulti = 0.0;
 			if (ImGui::SliderFloat("DEMO", &ForceMulti, 0.0f, 100.0f))
 			{
