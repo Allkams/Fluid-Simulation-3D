@@ -41,8 +41,11 @@ namespace Game
 	private:
 
 		float deltatime = 0;
+		float renderingElapsed = 0;
+		float colorElapsed = 0;
 		int nrParticles;
 		int CurrentParticle = 0;
+		bool isRunning = false;
 
 		void RenderUI();
 

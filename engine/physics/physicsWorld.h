@@ -27,33 +27,65 @@ namespace Physics
 
 			void Update(float deltatime);
 
-			void InitializeData(int particleAmmount, glm::vec2 Centre = {0,0}, Arrangements type = Arrangements::GRID);
+			void InitializeData(int particleAmmount, glm::vec2 Centre = { 0,0 }, Arrangements type = Arrangements::GRID);
 
-			glm::vec2& getPosition(uint32 particleIndex);
-			glm::vec2& getVelocity(uint32 particleIndex);
+			glm::vec2 getPosition(uint32 particleIndex);
+			glm::vec2 getVelocity(uint32 particleIndex);
 			float getDensity(uint32 particleIndex);
+			float getNearDensity(uint32 particleIndex);
 			float getSpeed(uint32 particleIndex);
 			float getSpeedNormalzied(uint32 particleIndex);
+
+			void setSimulationTime(float time);
+			float getSimulationTime();
+
+			void setGravity(bool status);
+			bool getGravityStatus();
+
+			void setInteractionRadius(float value);
+			float getInteractionRadius();
+
+			void setDensityTarget(float value);
+			float getDensityTarget();
+
+			void setPressureMultiplier(float value);
+			float getPressureMultiplier();
+
+			void setNearPressureMultiplier(float value);
+			float getNearPressureMultiplier();
+
+			void setViscosityStrength(float value);
+			float getViscosityStrength();
+
+			void setGravityScale(float value);
+			float getGravityScale();
+
+			void setBound(const glm::vec2& value);
+			glm::vec2 getBounds();
 
 		private:
 
 			void updateDensities();
 
-			float CalculateDensity(uint32 particleIndex);
+			glm::vec2 CalculateDensity(const glm::vec2& pos);
 			float ConvertDensityToPressure(float density);
-			float CalculateSharedPressure(float densityA, float densityB);
+			float ConvertNearDensityToPressure(float nearDensity);
 
-			glm::vec2& CalculatePressureForce(uint32 particleIndex);
-			glm::vec2& CalculateViscosityForce(uint32 particleIndex);
+			void CalculatePressureForce(uint32 particleIndex, float deltatime);
+			void CalculateViscosityForce(uint32 particleIndex, float deltatime);
 
 			void UpdateSpatialLookup();
 
-			const float interactionRadius = 0.35f;
-			const float TargetDensity = 10.0f;
-			const float pressureMultiplier = 5.0f;
-			const float viscosityStrength = 0.0f;
+			float interactionRadius = 0.35f;
+			float TargetDensity = 6.0f;
+			float pressureMultiplier = 100.0f;
+			float nearPressureMultiplier = 2.0f;
+			float viscosityStrength = 0.05f;
+
+			float simTime = 0.0f;
 
 			bool gravity = false;
+			float gravityScale = 12.0f;
 
 			uint32 numParticles;
 			std::vector<uint32> pList;
@@ -62,7 +94,7 @@ namespace Physics
 			std::vector<glm::vec2> predictedPositions;
 			std::vector<glm::vec2> velocity;
 
-			std::vector<float> densities;
+			std::vector<glm::vec2> densities; // density, neardensity
 
 			glm::vec2 PositionToCellCoord(const glm::vec2& pos);
 			uint32_t HashCell(int X, int Y);
@@ -73,7 +105,7 @@ namespace Physics
 
 			const glm::vec2 offsets[9] = { {-1,-1}, {0, -1 }, {1, -1}, {-1, 0}, {0,0}, {1, 0}, {-1, 1}, {0,1}, {1,1} };
 
-			Boundary bound;
+			glm::vec2 Bound = { 16,9 };
 
 			void GridArrangement(int rowSize, float gap);
 			void RandomArrangement();

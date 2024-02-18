@@ -8,7 +8,7 @@ namespace Physics
 		{
 			if (dist < radius)
 			{
-				float volume = 6.0f / (glm::pi<float>() * pow(radius, 4));
+				float volume = 6 / (glm::pi<float>() * pow(radius, 4));
 				float v = radius - dist;
 				return v * v * volume;
 			}
@@ -29,7 +29,7 @@ namespace Physics
 
 		inline float SmoothingDerivativePow2(float dist, float radius)
 		{
-			if (dist < radius)
+			if (dist <= radius)
 			{
 				float scale = 12 / (pow(radius, 4) * glm::pi<float>());
 				float v = (radius - dist);
@@ -40,7 +40,7 @@ namespace Physics
 
 		inline float SmoothingDerivativePow3(float dist, float radius)
 		{
-			if (dist < radius)
+			if (dist <= radius)
 			{
 				float scale = 30 / (pow(radius, 5) * glm::pi<float>());
 				float v = (radius - dist);

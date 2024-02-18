@@ -22,6 +22,8 @@
 
 #include <vector>
 #include <chrono>
+#include <thread>
+#include <execution>
 
 #include "render/RenderBasic.h"
 #include "render/shader.h"
@@ -48,7 +50,7 @@ namespace Game
 		/*this->window*/
 		if (window->Open())
 		{
-			this->window->setSize(1920, 1080);
+			this->window->setSize(1900, 1060);
 			this->window->setTitle("Fluid Sim");
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
@@ -70,8 +72,13 @@ namespace Game
 		glm::vec2 winSize = window->getSize();
 		//PreWork
 		RenderUtils::Camera Cam(glm::vec3(0));
-		nrParticles = 1024;
+		nrParticles = 64*64;
 		Physics::Fluid::FluidSimulation::getInstace().InitializeData(nrParticles);
+		std::vector<uint32_t> particles;
+		for (int i = 0; i < nrParticles; i++)
+		{
+			particles.push_back(i);
+		}
 
 		Shader shader = Shader("./shaders/VertexShader.vs", "./shaders/FragementShader.fs");
 		shader.Enable();
@@ -88,16 +95,18 @@ namespace Game
 		shader.setMat4("project", perspect);
 		Render::Mesh plane = Render::CreateCircle(0.05f, 12);
 		Render::Mesh plane2 = Render::CreateCircle(0.35f, 12);
-		Render::Mesh plane3 = Render::CreatePlane(12, 8);
-
-		bool running = false;
-
+		//Solve this problem...
+		glm::vec2 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();
+		Render::Mesh plane3 = Render::CreatePlane(bound.x, bound.y);
 		glEnable(GL_DEPTH_TEST);
 
 		glm::vec4 red = { 1.0f, 0.0f, 0.0f, 1.0f };
 		glm::vec4 blue = { 0.0f, 0.0f, 1.0f, 1.0f };
 		std::vector<glm::vec4> colors;
 		colors.resize(nrParticles);
+
+		std::vector<glm::mat4> transforms;
+		transforms.resize(nrParticles);
 
 		deltatime = 0.016667f;
 		while (this->window->IsOpen())
@@ -123,30 +132,44 @@ namespace Game
 				break;
 			}
 
-			if (this->window->ProcessInput(GLFW_KEY_SPACE))
+			if (this->window->ProcessInput(GLFW_KEY_SPACE) && isRunning)
 			{
-				running = !running;
+				isRunning = false;
+			}
+			else if (this->window->ProcessInput(GLFW_KEY_SPACE) && !isRunning)
+			{
+				isRunning = true;
 			}
 
-			if (running)
+			auto simStart = std::chrono::steady_clock::now();
+			if (isRunning)
 			{
 				Physics::PhysicsWorld::getInstace().update(deltatime);
 			}
+			auto simEnd = std::chrono::steady_clock::now();
+			double simElapsed = std::chrono::duration<double>(simEnd - simStart).count() * 1000.0f;
+			Physics::Fluid::FluidSimulation::getInstace().setSimulationTime((float)simElapsed);
 
-			for (int i = 0; i < nrParticles; i++)
-			{
-				float normalized = Physics::Fluid::FluidSimulation::getInstace().getSpeedNormalzied(i);
-				glm::vec4 color = (1.0f - normalized) * blue + normalized * red;
-				colors[i] = color;
-			}
+			auto colorUpdateStart = std::chrono::steady_clock::now();
+			std::for_each(std::execution::par, particles.begin(), particles.end(),
+				[this, blue, red, &colors, &transforms](uint32_t i)
+				{
+					float normalized = Physics::Fluid::FluidSimulation::getInstace().getSpeedNormalzied(i);
+					glm::vec4 color = (1.0f - normalized) * blue + normalized * red;
+					colors[i] = color;
 
+					transforms[i] = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(i), -3.0f));
+				});
+			auto colorUpdateEnd = std::chrono::steady_clock::now();
+			colorElapsed = std::chrono::duration<double>(colorUpdateEnd - colorUpdateStart).count() * 1000.0f;
+
+			auto renderStart = std::chrono::steady_clock::now();
 			for (int i = 0; i < nrParticles; i++)
 			{
 				shader.setVec4("color", colors[i]);
 
-				glm::mat4 trans = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(i), -3.0f));
 
-				shader.setMat4("model", trans);
+				shader.setMat4("model", transforms[i]);
 				plane.bindVAO();
 				plane.renderMesh(0);
 				plane.unBindVAO();
@@ -167,12 +190,13 @@ namespace Game
 			plane3.bindVAO();
 			plane3.renderMesh(0);
 			plane3.unBindVAO();
-
+			auto renderEnd = std::chrono::steady_clock::now();
+			renderingElapsed = std::chrono::duration<double>(renderEnd - renderStart).count() * 1000.0f;
 			this->window->SwapBuffers();
 			this->window->Update();
 
 			auto timeEnd = std::chrono::steady_clock::now();
-			deltatime = std::chrono::duration<double>(timeEnd - timeStart).count();
+			deltatime = std::min(0.0333333, std::chrono::duration<double>(timeEnd - timeStart).count());
 		}
 
 		return true;
@@ -188,11 +212,18 @@ namespace Game
 	{
 		if (this->window->IsOpen())
 		{
-			ImGui::Begin("Debug");
+			ImGui::Begin("Debug Info");
 
 			int fps = 1.0f/ deltatime;
 			ImGui::Text("FPS: %i", fps);
 			ImGui::Text("Particles: %i", nrParticles);
+			ImGui::NewLine();
+			ImGui::Text("Simulation status: %s", isRunning ? "ON" : "OFF");
+			float simTime = Physics::Fluid::FluidSimulation::getInstace().getSimulationTime();
+			ImGui::Text("Simulation Elapsed: %.2f ms", simTime);
+			ImGui::Text("Rendering Elapsed:  %.2f ms", renderingElapsed);
+			ImGui::Text("Color Elapsed:      %.2f ms", colorElapsed);
+			ImGui::Text("Program Elapsed:    %.2f ms", deltatime * 1000.0f);
 			ImGui::NewLine();
 			int targetSphere = CurrentParticle;
 			if (ImGui::InputInt("Focus Particle", &targetSphere))
@@ -211,11 +242,72 @@ namespace Game
 			ImGui::Text("  Velocity: (%f, %f)", Physics::Fluid::FluidSimulation::getInstace().getVelocity(CurrentParticle).x, Physics::Fluid::FluidSimulation::getInstace().getVelocity(CurrentParticle).y);
 			ImGui::Text("  Density: (%f)", Physics::Fluid::FluidSimulation::getInstace().getDensity(CurrentParticle));
 
-
-			float ForceMulti = 0.0;
-			if (ImGui::SliderFloat("DEMO", &ForceMulti, 0.0f, 100.0f))
+			ImGui::NewLine();
+			bool gravity = Physics::Fluid::FluidSimulation::getInstace().getGravityStatus();
+			if (ImGui::Checkbox("Gravity", &gravity))
 			{
-				
+				Physics::Fluid::FluidSimulation::getInstace().setGravity(gravity);
+			}
+
+			ImGui::End();
+
+			ImGui::Begin("Values");
+
+			if (isRunning)
+			{
+				isRunning = !ImGui::Button("Stop", { 100,25 });
+				if (ImGui::InputInt("Particles", &nrParticles, 1, 100, ImGuiInputTextFlags_ReadOnly)) {}
+			}
+			else
+			{
+				isRunning = ImGui::Button("Start", { 100,25 });
+				if (ImGui::InputInt("Particles", &nrParticles)) 
+				{
+					Physics::Fluid::FluidSimulation::getInstace().InitializeData(nrParticles);
+				}
+			}
+
+			float interactionRadius = Physics::Fluid::FluidSimulation::getInstace().getInteractionRadius();
+			if (ImGui::SliderFloat("Interaction Radius", &interactionRadius, 0.01f, 10.0f))
+			{
+				Physics::Fluid::FluidSimulation::getInstace().setInteractionRadius(interactionRadius);
+			}
+
+			float TargetDensity = Physics::Fluid::FluidSimulation::getInstace().getDensityTarget();
+			if (ImGui::SliderFloat("Target Density", &TargetDensity, 0.0f, 1000.0f))
+			{
+				Physics::Fluid::FluidSimulation::getInstace().setDensityTarget(TargetDensity);
+			}
+
+			float pressureMulti = Physics::Fluid::FluidSimulation::getInstace().getPressureMultiplier();
+			if (ImGui::SliderFloat("Pressure Multiplier", &pressureMulti, 0.0f, 10.0f))
+			{
+				Physics::Fluid::FluidSimulation::getInstace().setPressureMultiplier(pressureMulti);
+			}
+
+			float nearPressureMulti = Physics::Fluid::FluidSimulation::getInstace().getNearPressureMultiplier();
+			if (ImGui::SliderFloat("Target Density", &nearPressureMulti, 0.0f, 1000.0f))
+			{
+				Physics::Fluid::FluidSimulation::getInstace().setNearPressureMultiplier(nearPressureMulti);
+			}
+
+			float viscosityStrength = Physics::Fluid::FluidSimulation::getInstace().getViscosityStrength();
+			if (ImGui::SliderFloat("Viscosity Strength", &viscosityStrength, 0.0f, 1.0f))
+			{
+				Physics::Fluid::FluidSimulation::getInstace().setViscosityStrength(viscosityStrength);
+			}
+
+			float gravityScale = Physics::Fluid::FluidSimulation::getInstace().getGravityStatus();
+			if (ImGui::SliderFloat("Gravity Scale", &gravityScale, 0.0f, 100.0f))
+			{
+				Physics::Fluid::FluidSimulation::getInstace().setViscosityStrength(gravityScale);
+			}
+
+			glm::vec2 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();
+			int b[2] = {bound.x, bound.y};
+			if (ImGui::SliderInt2("Bounding Volume", b, 0.0f, 20.0f))
+			{
+				Physics::Fluid::FluidSimulation::getInstace().setBound({b[0], b[1] });
 			}
 
 			ImGui::End();
