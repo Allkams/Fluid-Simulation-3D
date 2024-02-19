@@ -93,11 +93,10 @@ namespace Game
 		shader.setMat4("model", trans);
 		shader.setMat4("view", view);
 		shader.setMat4("project", perspect);
-		Render::Mesh plane = Render::CreateCircle(0.05f, 12);
+		Render::simpleMesh circle = Render::CreateSimpleCircle(0.05f, 12);
 		Render::Mesh plane2 = Render::CreateCircle(0.35f, 12);
 		//Solve this problem...
-		glm::vec2 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();
-		Render::Mesh plane3 = Render::CreatePlane(bound.x, bound.y);
+		Render::Mesh plane3 = Render::CreatePlane(1.0f, 1.0f);
 		glEnable(GL_DEPTH_TEST);
 
 		glm::vec4 red = { 1.0f, 0.0f, 0.0f, 1.0f };
@@ -113,6 +112,9 @@ namespace Game
 		{
 			auto timeStart = std::chrono::steady_clock::now();
 			glClearColor(0.4f, 0.0f, 0.8f, 1.0f);
+
+			colors.resize(nrParticles);
+			transforms.resize(nrParticles);
 
 			// Accept fragment if it closer to the camera than the former one
 			glDepthFunc(GL_LESS);
@@ -154,6 +156,7 @@ namespace Game
 			std::for_each(std::execution::par, particles.begin(), particles.end(),
 				[this, blue, red, &colors, &transforms](uint32_t i)
 				{
+				if (colors.size() > nrParticles || i >= nrParticles) return;
 					float normalized = Physics::Fluid::FluidSimulation::getInstace().getSpeedNormalzied(i);
 					glm::vec4 color = (1.0f - normalized) * blue + normalized * red;
 					colors[i] = color;
@@ -164,16 +167,15 @@ namespace Game
 			colorElapsed = std::chrono::duration<double>(colorUpdateEnd - colorUpdateStart).count() * 1000.0f;
 
 			auto renderStart = std::chrono::steady_clock::now();
+			circle.bindVAO();
 			for (int i = 0; i < nrParticles; i++)
 			{
 				shader.setVec4("color", colors[i]);
-
-
 				shader.setMat4("model", transforms[i]);
-				plane.bindVAO();
-				plane.renderMesh(0);
-				plane.unBindVAO();
+				circle.renderMesh();
+
 			}
+			circle.unBindVAO();
 
 			shader.setVec4("color", glm::vec4(0.3f, 0.0f, 0.0f, 0.2f));
 			glm::mat4 trans = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(CurrentParticle), -3.0f));
@@ -183,8 +185,9 @@ namespace Game
 			plane2.unBindVAO();
 
 			//BOUND
+			glm::vec2 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();
 			shader.setVec4("color", glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
-			trans = glm::translate(glm::vec3(0.0f,0.0f, -3.0f));
+			trans = glm::translate(glm::vec3(0.0f,0.0f, -3.0f)) * glm::scale(glm::vec3(bound, 0.0f));
 			shader.setMat4("model", trans);
 
 			plane3.bindVAO();
@@ -261,6 +264,13 @@ namespace Game
 			else
 			{
 				isRunning = ImGui::Button("Start", { 100,25 });
+				ImGui::SameLine();
+				if (ImGui::Button("Reset", { 100,25 }))
+				{
+					deltatime = 0.0166667f;
+					Physics::Fluid::FluidSimulation::getInstace().InitializeData(nrParticles);
+				}
+
 				if (ImGui::InputInt("Particles", &nrParticles)) 
 				{
 					Physics::Fluid::FluidSimulation::getInstace().InitializeData(nrParticles);
@@ -274,7 +284,7 @@ namespace Game
 			}
 
 			float TargetDensity = Physics::Fluid::FluidSimulation::getInstace().getDensityTarget();
-			if (ImGui::SliderFloat("Target Density", &TargetDensity, 0.0f, 1000.0f))
+			if (ImGui::SliderFloat("Target Density", &TargetDensity, 0.0f, 100.0f))
 			{
 				Physics::Fluid::FluidSimulation::getInstace().setDensityTarget(TargetDensity);
 			}
@@ -286,21 +296,21 @@ namespace Game
 			}
 
 			float nearPressureMulti = Physics::Fluid::FluidSimulation::getInstace().getNearPressureMultiplier();
-			if (ImGui::SliderFloat("Target Density", &nearPressureMulti, 0.0f, 1000.0f))
+			if (ImGui::SliderFloat("Pressure Near Multiplier", &nearPressureMulti, 0.0f, 10.0f))
 			{
 				Physics::Fluid::FluidSimulation::getInstace().setNearPressureMultiplier(nearPressureMulti);
 			}
 
 			float viscosityStrength = Physics::Fluid::FluidSimulation::getInstace().getViscosityStrength();
-			if (ImGui::SliderFloat("Viscosity Strength", &viscosityStrength, 0.0f, 1.0f))
+			if (ImGui::SliderFloat("Viscosity Strength", &viscosityStrength, 0.0f, 0.1f))
 			{
 				Physics::Fluid::FluidSimulation::getInstace().setViscosityStrength(viscosityStrength);
 			}
 
-			float gravityScale = Physics::Fluid::FluidSimulation::getInstace().getGravityStatus();
-			if (ImGui::SliderFloat("Gravity Scale", &gravityScale, 0.0f, 100.0f))
+			float gravityScale = Physics::Fluid::FluidSimulation::getInstace().getGravityScale();
+			if (ImGui::SliderFloat("Gravity Scale", &gravityScale, 0.0f, 10.0f))
 			{
-				Physics::Fluid::FluidSimulation::getInstace().setViscosityStrength(gravityScale);
+				Physics::Fluid::FluidSimulation::getInstace().setGravityScale(gravityScale);
 			}
 
 			glm::vec2 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();

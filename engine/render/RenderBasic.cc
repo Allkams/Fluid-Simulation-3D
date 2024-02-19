@@ -47,13 +47,13 @@ namespace Render
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertice), (void*)0);
 
-		// Passing vertice color
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertice), (void*)offsetof(Vertice, Color));
+		//// Passing vertice color
+		//glEnableVertexAttribArray(1);
+		//glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertice), (void*)offsetof(Vertice, Color));
 
-		// Passing vertice texture cords
-		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertice), (void*)offsetof(Vertice, TexCoord));
+		//// Passing vertice texture cords
+		//glEnableVertexAttribArray(2);
+		//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertice), (void*)offsetof(Vertice, TexCoord));
 
 		// unbinding VAO
 		glBindVertexArray(0);
@@ -169,6 +169,27 @@ namespace Render
 			});
 	}
 
+	simpleMesh CreateSimpleCircle(float32 radius, int numVertices)
+	{
+		std::vector<glm::vec3> vertices;
+		std::vector<GLuint> indices;
+		//Face one
+		for (int i = 0; i < numVertices * 3; ++i) {
+			float theta = 2.0f * glm::pi<float>() * static_cast<float>(i) / static_cast<float>(numVertices);
+			float x = radius * cos(theta);
+			float y = radius * sin(theta);
+			vertices.push_back(glm::vec3(x, y, 0.0f));
+		}
+
+		for (int i = 1; i <= numVertices * 3; ++i) {
+			indices.push_back(0);  // Center vertex
+			indices.push_back(i);  // Outer vertex
+			indices.push_back(i % numVertices + 1);  // Next outer vertex or first vertex if last
+		}
+
+		return simpleMesh(vertices, indices);
+	}
+
 	Mesh CreateCube(float32 width, float32 height, float32 depth)
 	{
 		float32 widthPos = width / 2.0f;
@@ -245,4 +266,42 @@ namespace Render
 	
 	Mesh CreateSphere(float32 radius);
 	Mesh CreateCylinder(float32 radius, float32 height);
+
+	simpleMesh::simpleMesh(std::vector<glm::vec3> positions, std::vector<GLuint> indices)
+	{
+		indiceLength = (GLuint)indices.size();
+		glGenVertexArrays(1, &VAO);
+		GLuint VBO;
+		GLuint EBO;
+		glGenBuffers(1, &VBO);
+		glGenBuffers(1, &EBO);
+
+		// Binding Buffers
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+
+		// Filling Buffers
+		glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(glm::vec3), &positions[0], GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
+
+		// Passing vertice position
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+
+		glBindVertexArray(0);
+	}
+	void simpleMesh::renderMesh()
+	{
+		glDrawElements(GL_TRIANGLES, this->indiceLength, GL_UNSIGNED_INT, NULL);
+	}
+	void simpleMesh::bindVAO()
+	{
+		glBindVertexArray(VAO);
+	}
+
+	void simpleMesh::unBindVAO()
+	{
+		glBindVertexArray(0);
+	}
 }

@@ -57,7 +57,7 @@ namespace Physics
 			std::for_each(std::execution::par, pList.begin(), pList.end(),
 				[this, deltatime](uint32_t i)
 			{
-				CalculateViscosityForce(i, deltatime);
+					CalculateViscosityForce(i, deltatime);
 			});
 
 			std::for_each(std::execution::par, pList.begin(), pList.end(),
@@ -286,6 +286,9 @@ namespace Physics
 
 					if (index.hash != hash) continue;
 
+					if (index.index >= numParticles) break;
+
+
 					uint32_t neighborIndex = index.index;
 
 					glm::vec2 neighbourPos = predictedPositions[neighborIndex];
@@ -412,7 +415,7 @@ namespace Physics
 
 		void FluidSimulation::UpdateSpatialLookup()
 		{
-			if (spatialLookup.size() == 0)
+			if (spatialLookup.size() == 0 || spatialLookup.size() < numParticles)
 			{
 				spatialLookup.resize(numParticles);
 				startIndices.resize(numParticles);
@@ -420,6 +423,7 @@ namespace Physics
 			std::for_each(std::execution::par, pList.begin(), pList.end(),
 				[this](uint32_t i)
 			{
+				if (i >= numParticles) return;
 				glm::vec2 cellPos = PositionToCellCoord(predictedPositions[i]);
 				uint32_t hash = HashCell(cellPos.x, cellPos.y);
 				uint32_t cellKey = GetKeyFromHash(hash, numParticles);
@@ -432,6 +436,7 @@ namespace Physics
 			std::for_each(std::execution::par, pList.begin(), pList.end(),
 				[this](uint32_t i)
 			{
+				if (i >= numParticles) return;
 				uint32_t key = spatialLookup[i].key;
 				uint32_t keyPrev = i == 0 ? UINT32_MAX : spatialLookup[i - 1].key;
 				if (key != keyPrev)
@@ -461,7 +466,7 @@ namespace Physics
 
 		void FluidSimulation::GridArrangement(int rowSize, float gap)
 		{
-			float totalWidth = numParticles < rowSize ? 0 : numParticles % rowSize;
+			float totalWidth = numParticles <= rowSize ? 0 : rowSize;
 			float TotalOffsetFromCenterWidth = totalWidth == 0 ? rowSize * gap : totalWidth * gap;
 
 			float totalHeight = ceil((float)numParticles / (float)rowSize);

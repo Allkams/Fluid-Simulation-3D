@@ -73,9 +73,23 @@ namespace Render
 		void processMesh(std::vector<Vertice> Vertices, std::vector<GLuint> indices);
 	};
 
+	class simpleMesh
+	{
+	public:
+		simpleMesh(std::vector<glm::vec3> positions, std::vector<GLuint> indices);
+
+		void renderMesh();
+		void bindVAO();
+		void unBindVAO();
+	private:
+		GLuint VAO;
+		GLuint indiceLength;
+	};
+
 	Mesh CreateTriangle(float32 width, float32 height);
 	Mesh CreatePlane(float32 width, float32 height);
 	Mesh CreateCircle(float32 radius, int numVertices);
+	simpleMesh CreateSimpleCircle(float32 radius, int numVertices);
 	Mesh CreateCube(float32 width, float32 height, float32 depth);
 	Mesh CreateSphere();
 	Mesh CreateCylinder();
