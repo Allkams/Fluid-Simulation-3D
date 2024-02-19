@@ -77,15 +77,15 @@ namespace Physics
 			void UpdateSpatialLookup();
 
 			float interactionRadius = 0.35f;
-			float TargetDensity = 6.0f;
-			float pressureMultiplier = 100.0f;
+			float TargetDensity = 45.0f;
+			float pressureMultiplier = 20.0f;
 			float nearPressureMultiplier = 2.0f;
 			float viscosityStrength = 0.05f;
 
 			float simTime = 0.0f;
 
 			bool gravity = false;
-			float gravityScale = 12.0f;
+			float gravityScale = 0.982f;
 
 			uint32 numParticles;
 			std::vector<uint32> pList;

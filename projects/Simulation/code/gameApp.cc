@@ -290,13 +290,13 @@ namespace Game
 			}
 
 			float pressureMulti = Physics::Fluid::FluidSimulation::getInstace().getPressureMultiplier();
-			if (ImGui::SliderFloat("Pressure Multiplier", &pressureMulti, 0.0f, 10.0f))
+			if (ImGui::SliderFloat("Pressure Multiplier", &pressureMulti, 0.0f, 100.0f))
 			{
 				Physics::Fluid::FluidSimulation::getInstace().setPressureMultiplier(pressureMulti);
 			}
 
 			float nearPressureMulti = Physics::Fluid::FluidSimulation::getInstace().getNearPressureMultiplier();
-			if (ImGui::SliderFloat("Pressure Near Multiplier", &nearPressureMulti, 0.0f, 10.0f))
+			if (ImGui::SliderFloat("Pressure Near Multiplier", &nearPressureMulti, 0.0f, 100.0f))
 			{
 				Physics::Fluid::FluidSimulation::getInstace().setNearPressureMultiplier(nearPressureMulti);
 			}
