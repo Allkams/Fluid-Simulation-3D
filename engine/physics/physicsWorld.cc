@@ -109,7 +109,7 @@ namespace Physics
 			}
 
 			int RowSize = ceil(glm::sqrt(particleAmmount));
-			float gap = 0.2f;
+			float gap = 0.115f;
 			switch (type)
 			{
 			case Physics::Fluid::GRID:
@@ -466,11 +466,28 @@ namespace Physics
 
 		void FluidSimulation::GridArrangement(int rowSize, float gap)
 		{
-			float totalWidth = numParticles <= rowSize ? 0 : rowSize;
-			float TotalOffsetFromCenterWidth = totalWidth == 0 ? rowSize * gap : totalWidth * gap;
+			float bestGridColumAmount = 0;
+			float bestGridRowAmount = 0;
+			while (true)
+			{
+				float totalWidth = numParticles <= rowSize ? 0 : rowSize;
 
-			float totalHeight = ceil((float)numParticles / (float)rowSize);
-			float TotalOffsetFromCenterHeight = totalHeight * gap;
+				float totalHeight = ceil((float)numParticles / (float)rowSize);
+
+				float width = totalWidth * gap;
+				float heigth = totalHeight * gap;
+
+				if (width <= Bound.x && heigth <= Bound.y)
+				{
+					bestGridColumAmount = totalWidth;
+					bestGridRowAmount = totalHeight;
+					break;
+				}
+				rowSize++;
+			}
+
+			float TotalOffsetFromCenterWidth = bestGridColumAmount == 0 ? rowSize * gap : bestGridColumAmount * gap;
+			float TotalOffsetFromCenterHeight = bestGridRowAmount * gap;
 
 			for (int i = 0; i < numParticles; i++)
 			{
@@ -487,6 +504,10 @@ namespace Physics
 				positions[i] = { x,y };
 				predictedPositions[i] = { x,y };
 			}
+		}
+		void FluidSimulation::RandomArrangement()
+		{
+
 		}
 	}
 }

@@ -85,7 +85,7 @@ namespace Physics
 			float simTime = 0.0f;
 
 			bool gravity = false;
-			float gravityScale = 0.982f;
+			float gravityScale = 9.82f;
 
 			uint32 numParticles;
 			std::vector<uint32> pList;

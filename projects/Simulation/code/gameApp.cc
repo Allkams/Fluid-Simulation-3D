@@ -81,6 +81,7 @@ namespace Game
 		}
 
 		Shader shader = Shader("./shaders/VertexShader.vs", "./shaders/FragementShader.fs");
+		Shader particleShader = Shader("./shaders/particleRender.vs", "./shaders/particleRender.fs");
 		shader.Enable();
 
 		glm::mat4 perspect = Cam.GetPerspective(winSize.x, winSize.y, 0.1f, 1000.0f);
@@ -93,7 +94,7 @@ namespace Game
 		shader.setMat4("model", trans);
 		shader.setMat4("view", view);
 		shader.setMat4("project", perspect);
-		Render::simpleMesh circle = Render::CreateSimpleCircle(0.05f, 12);
+		Render::simpleMesh circle = Render::CreateSimpleCircle(0.020f, 12);
 		Render::Mesh plane2 = Render::CreateCircle(0.35f, 12);
 		//Solve this problem...
 		Render::Mesh plane3 = Render::CreatePlane(1.0f, 1.0f);
@@ -176,6 +177,48 @@ namespace Game
 
 			}
 			circle.unBindVAO();
+
+			//shader.Disable();
+
+			//particleShader.Enable();
+
+			//glBindBuffer(GL_ARRAY_BUFFER, 0);
+			//glm::mat4 billboardView = glm::mat4(
+			//	{ 1, 0, 0, 0 },
+			//	{ 0, 1, 0, 0 },
+			//	{ 0, 0, 1, 0 },
+			//	Cam.GetViewMatrix()[3]
+			//);
+			//glm::mat4 billboardViewProjection = /*glm::project*/ * billboardView;
+
+			//glUniformMatrix4fv(glGetUniformLocation(programHandle, "ViewProjection"), 1, false, &mainCamera->viewProjection[0][0]);
+			//glUniformMatrix4fv(glGetUniformLocation(programHandle, "BillBoardViewProjection"), 1, false, &billboardViewProjection[0][0]);
+			//GLuint particleOffsetLoc = glGetUniformLocation(programHandle, "ParticleOffset");
+
+			//for (auto emitter : particles->emitters)
+			//{ // DRAW
+			//	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, emitter->bufPositions[readIndex]);
+			//	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, emitter->bufColors[readIndex]);
+
+			//	// Split drawcalls into smaller bits, since integer division on AMD cards is inaccurate
+			//	int numVerts = emitter->data.numParticles * 6;
+			//	const int numVertsPerDrawCall = 0x44580; // has to be divisible with 6
+			//	int numDrawCalls = emitter->data.numParticles / numVertsPerDrawCall;
+			//	int particleOffset = 0;
+			//	while (numVerts > 0)
+			//	{
+			//		int drawVertCount = glm::min(numVerts, numVertsPerDrawCall);
+			//		glUniform1i(particleOffsetLoc, particleOffset);
+			//		glDrawArrays(GL_TRIANGLES, 0, drawVertCount);
+			//		numVerts -= drawVertCount;
+			//		particleOffset += drawVertCount / 6;
+			//	}
+			//}
+
+
+			//particleShader.Disable();
+
+			//shader.Enable();
 
 			shader.setVec4("color", glm::vec4(0.3f, 0.0f, 0.0f, 0.2f));
 			glm::mat4 trans = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(CurrentParticle), -3.0f));
