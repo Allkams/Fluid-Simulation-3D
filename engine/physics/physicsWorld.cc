@@ -2,7 +2,9 @@
 #include "physicsWorld.h"
 
 #include "kernels.h"
+#include "core/random.h"
 
+#include <chrono>
 #include <thread>
 #include <execution>
 
@@ -42,6 +44,7 @@ namespace Physics
 					velocity[i].y -= gravityScale * deltatime;
 				}
 				predictedPositions[i] = positions[i] + velocity[i] * (1.0f / 60.0f);
+				//WriteIndex = readIndex;
 			});
 
 			UpdateSpatialLookup();
@@ -105,7 +108,7 @@ namespace Physics
 				positions.push_back({ 0,0 });
 				velocity.push_back({ 0,0 });
 				predictedPositions.push_back({ 0,0 });
-				densities.push_back({0,0});
+				densities.push_back({ 0,0 });
 			}
 
 			int RowSize = ceil(glm::sqrt(particleAmmount));
@@ -116,6 +119,7 @@ namespace Physics
 				GridArrangement(RowSize, gap);
 				break;
 			case Physics::Fluid::RANDOM:
+				RandomArrangement(gap);
 				break;
 			case Physics::Fluid::CIRCLE:
 				break;
@@ -265,7 +269,6 @@ namespace Physics
 
 		glm::vec2 FluidSimulation::CalculateDensity(const glm::vec2& pos)
 		{
-
 			glm::vec2 originCell = PositionToCellCoord(pos);
 			float sqrRadius = interactionRadius * interactionRadius;
 			float density = 0;
@@ -505,9 +508,73 @@ namespace Physics
 				predictedPositions[i] = { x,y };
 			}
 		}
-		void FluidSimulation::RandomArrangement()
+		void FluidSimulation::RandomArrangement(int gap)
 		{
+			auto arrangeTimeStart = std::chrono::steady_clock::now();
+			int processed = 0;
+			float sqrRadius = interactionRadius * interactionRadius;
+			for (int i = 0; i < numParticles; i++)
+			{
+				if (processed == 0)
+				{
+					UpdateSpatialLookup();
+				}
 
+				if ((i % 10) == 10) UpdateSpatialLookup();
+
+				// -1 .. 0 .. 1
+				printf("Processing particle %i \n", i);
+				float randomValueX = Core::RandomFloatNTP();
+				float randomValueY = Core::RandomFloatNTP();
+
+				bool PositionFail = false;
+
+				float x = Bound.x * randomValueX;
+				float y = Bound.y * randomValueY;
+				glm::vec2 newPosition = { x,y };
+				glm::vec2 originCell = PositionToCellCoord(newPosition);
+				//printf("	New X %f \n", x);
+				//printf("	New Y %f \n", y);
+
+				for (int j = 0; j < 9; j++)
+				{
+					uint32_t hash = HashCell(originCell.x + offsets[j].x, originCell.y + offsets[j].y);
+					uint32_t key = GetKeyFromHash(hash, numParticles);
+					int currIndex = startIndices[key];
+
+					while (currIndex < numParticles)
+					{
+						SpatialStruct index = spatialLookup[currIndex];
+						currIndex++;
+						if (index.key != key) break;
+
+
+						if (index.hash != hash) continue;
+
+						uint32_t neighborIndex = index.index;
+						if (neighborIndex == i) continue;
+
+						glm::vec2 neighbourPos = predictedPositions[neighborIndex];
+						glm::vec2 offsetToNeighbour = neighbourPos - newPosition;
+						float sqrDist = dot(offsetToNeighbour, offsetToNeighbour);
+
+						if (sqrDist > sqrRadius) continue;
+
+						PositionFail = true;
+						break;
+					}
+				}
+
+				if (PositionFail) { i--; continue; }
+
+				positions[i] = newPosition;
+				predictedPositions[i] = newPosition;
+				processed++;
+			}
+
+			auto arrangeTimeEnd = std::chrono::steady_clock::now();
+			double ArrangeTimeElapsed = std::chrono::duration<double>(arrangeTimeEnd - arrangeTimeStart).count() * 1000.0f; // ms
+			printf("Time to arrange: %f ms\n", (float)ArrangeTimeElapsed);
 		}
 	}
 }

@@ -20,7 +20,6 @@
 
 /*
 * TODO:
-*	- Add functions for ImGui
 *	- Add functions for NanoVG
 */
 

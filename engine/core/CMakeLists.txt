@@ -1,6 +1,6 @@
 SET(files_core
-	temp.cc
-	temp.h
+	random.cc
+	random.h
     )
 SOURCE_GROUP("core" FILES ${files_core})
 	

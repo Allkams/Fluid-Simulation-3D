@@ -20,17 +20,6 @@
 #include <iostream>
 #include "gameApp.h"
 
-/*
-* TODO Today:
-*	- Make a Square and then a Cube.
-* 
-* Future TODO:
-*	- Add a Texture loader
-*	- Make a Sphere
-*	- Create an OBJ Loader
-*	- Create an GLTF Loader
-*/
-
 int main()
 {
 	Game::GameApp gameApp;

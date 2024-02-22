@@ -108,7 +108,7 @@ namespace Physics
 			glm::vec2 Bound = { 16,9 };
 
 			void GridArrangement(int rowSize, float gap);
-			void RandomArrangement();
+			void RandomArrangement(int gap);
 			void CircleArrangement();
 
 		private:
