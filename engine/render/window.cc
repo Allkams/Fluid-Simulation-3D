@@ -69,7 +69,7 @@ namespace DISPLAY
 	
 	int32 Window::WindowCount = 0;
 
-	Window::Window() : window(nullptr), width(1280), height(720)
+	Window::Window() : window(nullptr), width(1900), height(1060)
 	{
 		glfwInit();
 	}

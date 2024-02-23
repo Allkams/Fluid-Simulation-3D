@@ -39,6 +39,7 @@ namespace RenderUtils
 		glm::vec3 WorldUpVector;
 		glm::vec3 Target;
 
+
 		float Yaw;
 		float Pitch;
 
@@ -49,13 +50,21 @@ namespace RenderUtils
 		Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = -90.0f, float pitch = 0.0f);
 		Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
 
+		void setViewMatrix();
 		glm::mat4 GetViewMatrix();
-		glm::mat4 GetPerspective(float width, float height, float near, float far);
+		glm::mat4 GetInvViewMatrix();
+		void setProjection(float width, float height, float near, float far);
+		glm::mat4 GetProjection();
+		glm::mat4 GetInvProjection();
 
 		void Move(CameraMovement direction, float deltaTime);
 		void Look(float xOffset, float yOffset, GLboolean constrainPitch = true);
 		void Zoom(float yOffset);
 	private:
+		glm::mat4 View;
+		glm::mat4 InvView;
+		glm::mat4 Projection;
+		glm::mat4 InvProjection;
 		void updateCamera();
 	};
 }

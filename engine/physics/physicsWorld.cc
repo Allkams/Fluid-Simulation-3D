@@ -41,9 +41,10 @@ namespace Physics
 			{
 				if (gravity)
 				{
-					velocity[i].y -= gravityScale * deltatime;
+					velocity[i] += CalculateExternalFoce(positions[i], velocity[i]) * deltatime;
+					//velocity[i].y -= gravityScale * deltatime;
 				}
-				predictedPositions[i] = positions[i] + velocity[i] * (1.0f / 60.0f);
+				predictedPositions[i] = positions[i] + velocity[i] * (1.0f / 120.0f);
 				//WriteIndex = readIndex;
 			});
 
@@ -165,7 +166,7 @@ namespace Physics
 		float FluidSimulation::getSpeedNormalzied(uint32 particleIndex)
 		{
 			if (particleIndex >= numParticles) return 0.0f;
-			return glm::clamp(glm::length(velocity[particleIndex]), 0.0f, 1.0f) / 1.0f;
+			return glm::clamp(glm::length(velocity[particleIndex]), 0.0f, 1.5f) / 1.5f;
 		}
 
 		void FluidSimulation::setSimulationTime(float time)
@@ -248,6 +249,16 @@ namespace Physics
 			return gravityScale;
 		}
 
+		void FluidSimulation::setMousePosition(glm::vec2 pos)
+		{
+			InteractionMousePoint = pos;
+		}
+
+		glm::vec2 FluidSimulation::getMousePosition()
+		{
+			return InteractionMousePoint;
+		}
+
 		void FluidSimulation::setBound(const glm::vec2& value)
 		{
 			Bound = value;
@@ -265,6 +276,32 @@ namespace Physics
 			{
 				densities[i] = CalculateDensity(predictedPositions[i]);
 			});
+		}
+
+		glm::vec2 FluidSimulation::CalculateExternalFoce(const glm::vec2& pos, const glm::vec2& vel)
+		{
+			glm::vec2 gravityAccel = { 0, -gravityScale };
+
+			if (InteractionInputStrength != 0)
+			{
+				glm::vec2 PointOffset = InteractionMousePoint - pos;
+				float sqrDist = dot(PointOffset, PointOffset);
+				float sqrRadius = InteractionInputRadius * InteractionInputRadius;
+				if (sqrDist < sqrRadius)
+				{
+					float dst = sqrt(sqrDist);
+					float edgeT = (dst / InteractionInputRadius);
+					float centreT = 1 - edgeT;
+					glm::vec2 dirToCentre = PointOffset / dst;
+
+					float gravityWeight = 1 - (centreT * glm::clamp(InteractionInputStrength / 10, 0.0f, 1.0f));
+					glm::vec2 accel = gravityAccel * gravityWeight + dirToCentre * centreT * InteractionInputStrength;
+					accel -= vel * centreT;
+					return accel;
+				}
+			}
+
+			return gravityAccel;
 		}
 
 		glm::vec2 FluidSimulation::CalculateDensity(const glm::vec2& pos)
@@ -361,7 +398,7 @@ namespace Physics
 					float neighborDensity = densities[neighborIndex].x;
 					float neighborNearDensity = densities[neighborIndex].y;
 					float neighborPressure = ConvertDensityToPressure(neighborDensity);
-					float neighborNearPressure = ConvertDensityToPressure(neighborNearDensity);
+					float neighborNearPressure = ConvertNearDensityToPressure(neighborNearDensity);
 
 					float sharedPressure = (pressure + neighborPressure) * 0.5f;
 					float sharedNearPressure = (nearPressure + neighborNearPressure) * 0.5f;
@@ -410,7 +447,7 @@ namespace Physics
 
 					float dist = sqrt(sqrDist);
 					float influence = kernels::SmoothingViscoPoly6(dist, interactionRadius);
-					viscosityForce += (velocity[neighborIndex] - velo * influence);
+					viscosityForce += (velocity[neighborIndex] - velo) * influence;
 				}
 			}
 			velocity[particleIndex] += viscosityForce * viscosityStrength * deltatime;

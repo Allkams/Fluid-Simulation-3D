@@ -60,12 +60,17 @@ namespace Physics
 			void setGravityScale(float value);
 			float getGravityScale();
 
+			void setMousePosition(glm::vec2 pos);
+			glm::vec2 getMousePosition();
+
 			void setBound(const glm::vec2& value);
 			glm::vec2 getBounds();
 
 		private:
 
 			void updateDensities();
+
+			glm::vec2 CalculateExternalFoce(const glm::vec2& pos, const glm::vec2& vel);
 
 			glm::vec2 CalculateDensity(const glm::vec2& pos);
 			float ConvertDensityToPressure(float density);
@@ -77,15 +82,19 @@ namespace Physics
 			void UpdateSpatialLookup();
 
 			float interactionRadius = 0.35f;
-			float TargetDensity = 45.0f;
-			float pressureMultiplier = 20.0f;
-			float nearPressureMultiplier = 2.0f;
-			float viscosityStrength = 0.05f;
+			float TargetDensity = 60.0f;
+			float pressureMultiplier = 300.0f;
+			float nearPressureMultiplier = 20.0f;
+			float viscosityStrength = 0.5f;
 
 			float simTime = 0.0f;
 
 			bool gravity = false;
-			float gravityScale = 9.82f;
+			float gravityScale = 10.0f;
+
+			glm::vec2 InteractionMousePoint = {0,0};
+			float InteractionInputStrength = 0.0f;
+			float InteractionInputRadius = 0.8f;
 
 			uint32 numParticles;
 			std::vector<uint32> pList;

@@ -39,14 +39,36 @@ namespace RenderUtils
 		updateCamera();
 	}
 
-	glm::mat4 Camera::GetViewMatrix()
+	void Camera::setViewMatrix()
 	{
-		return glm::lookAt(Position, Position + ForwardVector, UpVector);
+		View = glm::lookAt(Position, Position + ForwardVector, glm::vec3(0, 1.0f, 0));
+		InvView = glm::inverse(View);
 	}
 
-	glm::mat4 Camera::GetPerspective(float width, float height, float near, float far)
+	glm::mat4 Camera::GetViewMatrix()
 	{
-		return glm::perspective(90.0f, width / height, near, far);
+		return View;
+	}
+
+	glm::mat4 Camera::GetInvViewMatrix()
+	{
+		return InvView;
+	}
+
+	void Camera::setProjection(float width, float height, float near, float far)
+	{
+		Projection = glm::perspective(glm::radians(90.0f), width / height, near, far);
+		InvProjection = glm::inverse(Projection);
+	}
+
+	glm::mat4 Camera::GetProjection()
+	{
+		return Projection;
+	}
+
+	glm::mat4 Camera::GetInvProjection()
+	{
+		return InvProjection;
 	}
 
 	void Camera::Move(CameraMovement direction, float deltaTime)
