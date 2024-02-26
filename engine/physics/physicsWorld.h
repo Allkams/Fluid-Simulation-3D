@@ -69,6 +69,7 @@ namespace Physics
 			void setBound(const glm::vec2& value);
 			glm::vec2 getBounds();
 
+			std::vector<glm::vec2> positions;
 		private:
 
 			void updateDensities();
@@ -102,7 +103,6 @@ namespace Physics
 			uint32 numParticles;
 			std::vector<uint32> pList;
 
-			std::vector<glm::vec2> positions;
 			std::vector<glm::vec2> predictedPositions;
 			std::vector<glm::vec2> velocity;
 

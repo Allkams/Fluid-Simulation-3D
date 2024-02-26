@@ -125,12 +125,32 @@ namespace Game
 		std::vector<glm::vec4> colors;
 		colors.resize(nrParticles);
 
+		std::for_each(std::execution::par, particles.begin(), particles.end(),
+			[this, blue, &colors](uint32_t i)
+		{
+			colors[i] = blue;
+		});
+
 		std::vector<glm::mat4> transforms;
 		transforms.resize(nrParticles);
 
-		//GLuint bufPositions/*[2]*/;
+		GLuint bufPositions/*[2]*/;
 		//GLuint bufVelocities/*[2]*/;
-		//GLuint bufColors/*[2]*/;
+		GLuint bufColors/*[2]*/;
+
+		glGenBuffers(1, &bufPositions);
+		//glGenBuffers(1, bufVelocities);
+		glGenBuffers(1, &bufColors);
+
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPositions);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec2), Physics::Fluid::FluidSimulation::getInstace().positions.data(), GL_DYNAMIC_DRAW);
+
+		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufVelocities);
+		//glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), NULL, GL_DYNAMIC_DRAW);
+
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufColors);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), colors.data(), GL_DYNAMIC_DRAW);
+
 
 
 		deltatime = 0.016667f;
@@ -252,7 +272,7 @@ namespace Game
 			// --------------------------------------------------------------------------------------------
 			// Temporarly rendering of particles
 			// --------------------------------------------------------------------------------------------
-			circle.bindVAO();
+			/*circle.bindVAO();
 			for (int i = 0; i < nrParticles; i++)
 			{
 				shader.setVec4("color", colors[i]);
@@ -260,74 +280,76 @@ namespace Game
 				circle.renderMesh();
 
 			}
-			circle.unBindVAO();
+			circle.unBindVAO();*/
 			// --------------------------------------------------------------------------------------------
 
-			//shader.Disable();
+			shader.Disable();
 
-			//particleShader.Enable();
+			particleShader.Enable();
 
-			//glBindBuffer(GL_ARRAY_BUFFER, 0);
-			//glm::mat4 billboardView = glm::mat4(
-			//	{ 1, 0, 0, 0 },
-			//	{ 0, 1, 0, 0 },
-			//	{ 0, 0, 1, 0 },
-			//	Cam.GetViewMatrix()[3]
-			//);
-			//glm::mat4 billboardViewProjection = Cam.GetProjection() * billboardView;
+			/*glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::vec3), &Physics::Fluid::FluidSimulation::getInstace().positions[0], GL_STATIC_DRAW);*/
 
-			//glUniformMatrix4fv(glGetUniformLocation(particleShader.GetProgram(), "ViewProjection"), 1, false, &Cam.GetViewProjection()[0][0]);
-			//glUniformMatrix4fv(glGetUniformLocation(particleShader.GetProgram(), "BillBoardViewProjection"), 1, false, &billboardViewProjection[0][0]);
-			//GLuint particleOffsetLoc = glGetUniformLocation(particleShader.GetProgram(), "ParticleOffset");
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glm::mat4 billboardView = glm::mat4(
+				{ 1, 0, 0, 0 },
+				{ 0, 1, 0, 0 },
+				{ 0, 0, 1, 0 },
+				Cam.GetViewMatrix()[3]
+			);
+			glm::mat4 billboardViewProjection = Cam.GetProjection() * billboardView;
 
-			////for (auto emitter : particles->emitters)
-			////{ // DRAW
-			////	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, emitter->bufPositions[readIndex]);
-			////	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, emitter->bufColors[readIndex]);
+			glUniformMatrix4fv(glGetUniformLocation(particleShader.GetProgram(), "ViewProjection"), 1, false, &Cam.GetViewProjection()[0][0]);
+			glUniformMatrix4fv(glGetUniformLocation(particleShader.GetProgram(), "BillBoardViewProjection"), 1, false, &billboardViewProjection[0][0]);
+			GLuint particleOffsetLoc = glGetUniformLocation(particleShader.GetProgram(), "ParticleOffset");
 
-			////	// Split drawcalls into smaller bits, since integer division on AMD cards is inaccurate
-			////	int numVerts = emitter->data.numParticles * 6;
-			////	const int numVertsPerDrawCall = 0x44580; // has to be divisible with 6
-			////	int numDrawCalls = emitter->data.numParticles / numVertsPerDrawCall;
-			////	int particleOffset = 0;
-			////	while (numVerts > 0)
-			////	{
-			////		int drawVertCount = glm::min(numVerts, numVertsPerDrawCall);
-			////		glUniform1i(particleOffsetLoc, particleOffset);
-			////		glDrawArrays(GL_TRIANGLES, 0, drawVertCount);
-			////		numVerts -= drawVertCount;
-			////		particleOffset += drawVertCount / 6;
-			////	}
-			////}
+			//for (int i = 0 ; i < nrParticles; i++)
+			//{ // DRAW
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, bufPositions);
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, bufColors);
+
+			// Split drawcalls into smaller bits, since integer division on AMD cards is inaccurate
+			int numVerts = 1024 * 6;
+			const int numVertsPerDrawCall = 0x44580; // has to be divisible with 6
+			int numDrawCalls = 1024 / numVertsPerDrawCall;
+			int particleOffset = 0;
+			while (numVerts > 0)
+			{
+				int drawVertCount = glm::min(numVerts, numVertsPerDrawCall);
+				glUniform1i(particleOffsetLoc, particleOffset);
+				glDrawArrays(GL_TRIANGLES, 0, drawVertCount);
+				numVerts -= drawVertCount;
+				particleOffset += drawVertCount / 6;
+			}
+			//}
 
 
-			//particleShader.Disable();
+			particleShader.Disable();
 
-			//shader.Enable();
+			shader.Enable();
 
-			shader.setVec4("color", glm::vec4(0.3f, 0.0f, 0.0f, 0.2f));
-			glm::mat4 trans = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(CurrentParticle), -6.0f));
-			shader.setMat4("model", trans);
-			plane2.bindVAO();
-			plane2.renderMesh(0);
-			plane2.unBindVAO();
-
-			//shader.setVec4("color", glm::vec4(0.3f, 0.8f, 0.0f, 0.2f));
-			//trans = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getMousePosition(), -6.0f));
+			//shader.setVec4("color", glm::vec4(0.3f, 0.0f, 0.0f, 0.2f));
+			//glm::mat4 trans = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(CurrentParticle), -6.0f));
 			//shader.setMat4("model", trans);
 			//plane2.bindVAO();
 			//plane2.renderMesh(0);
 			//plane2.unBindVAO();
 
-			//BOUND
-			glm::vec2 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();
-			shader.setVec4("color", glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
-			trans = glm::translate(glm::vec3(0.0f,0.0f, -6.0f)) * glm::scale(glm::vec3(bound, 0.0f));
-			shader.setMat4("model", trans);
+			////shader.setVec4("color", glm::vec4(0.3f, 0.8f, 0.0f, 0.2f));
+			////trans = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getMousePosition(), -6.0f));
+			////shader.setMat4("model", trans);
+			////plane2.bindVAO();
+			////plane2.renderMesh(0);
+			////plane2.unBindVAO();
 
-			plane3.bindVAO();
-			plane3.renderMesh(0);
-			plane3.unBindVAO();
+			////BOUND
+			//glm::vec2 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();
+			//shader.setVec4("color", glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
+			//trans = glm::translate(glm::vec3(0.0f,0.0f, -6.0f)) * glm::scale(glm::vec3(bound, 0.0f));
+			//shader.setMat4("model", trans);
+
+			//plane3.bindVAO();
+			//plane3.renderMesh(0);
+			//plane3.unBindVAO();
 			auto renderEnd = std::chrono::steady_clock::now();
 			renderingElapsed = std::chrono::duration<double>(renderEnd - renderStart).count() * 1000.0f;
 			this->window->SwapBuffers();
@@ -336,7 +358,9 @@ namespace Game
 			auto timeEnd = std::chrono::steady_clock::now();
 			deltatime = std::min(0.0333333, std::chrono::duration<double>(timeEnd - timeStart).count());
 		}
-
+		glDeleteBuffers(1, &bufPositions);
+		//glDeleteBuffers(1, &bufVelocities);
+		glDeleteBuffers(1, &bufColors);
 		return true;
 	}
 
