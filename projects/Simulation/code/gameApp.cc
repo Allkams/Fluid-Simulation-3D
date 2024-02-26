@@ -128,6 +128,11 @@ namespace Game
 		std::vector<glm::mat4> transforms;
 		transforms.resize(nrParticles);
 
+		//GLuint bufPositions/*[2]*/;
+		//GLuint bufVelocities/*[2]*/;
+		//GLuint bufColors/*[2]*/;
+
+
 		deltatime = 0.016667f;
 		while (this->window->IsOpen())
 		{
@@ -168,28 +173,57 @@ namespace Game
 			auto simStart = std::chrono::steady_clock::now();
 			if (isRunning)
 			{
+				// RUN UPDATE
+				Physics::PhysicsWorld::getInstace().update(deltatime);
+
+				// MOUSE POSITION:
 				float64 x;
 				float64 y;
 				this->window->GetMousePos(x,y);
-				Physics::PhysicsWorld::getInstace().update(deltatime);
 				float xNDC = (2.0f * x) / winSize.x - 1.0f;
 				float yNDC = 1.0f - (2.0f * y) / winSize.y;
 
 				glm::vec4 rayClip(xNDC, yNDC, -1.0f, 1.0f);
 
-				glm::vec4 rayEye = glm::inverse(Cam.GetInvProjection()) * rayClip;
+				glm::vec4 rayEye = Cam.GetInvProjection() * rayClip;
 				rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
 				glm::vec4 rayWorld = Cam.GetInvViewMatrix() * rayEye;
-
+				// --------------------------------------------------------------------------------------------
+				// Needed?
+				// --------------------------------------------------------------------------------------------
 				glm::vec3 rayDirection = glm::normalize(glm::vec3(rayWorld));
 				
-				glm::vec3 P = Cam.ForwardVector * 6.0f;
+				glm::vec3 dir = glm::vec3(0, 0, -1);
 
-				float t = glm::dot(P - Cam.Position, Cam.ForwardVector) / glm::dot(rayDirection, Cam.ForwardVector);
+				glm::vec3 P = dir * 6.0f;
+
+				float t = glm::dot(P - Cam.Position, dir) / glm::dot(rayDirection, dir);
 
 				glm::vec3 hitPos = Cam.Position + t * rayDirection;
-
+				// --------------------------------------------------------------------------------------------
+				//Update mouse world position
 				Physics::Fluid::FluidSimulation::getInstace().setMousePosition({ hitPos.x, hitPos.y });
+				
+				// Listen to Mouse press to give input strength
+				this->window->SetMousePressFunction([this](int32 button, int32 press, int32 sc)
+				{
+					if (button == GLFW_MOUSE_BUTTON_1 && press)
+					{
+						printf("Mouse one pressed\n");
+						Physics::Fluid::FluidSimulation::getInstace().setInputStrength(400);
+					}
+					else if (button == GLFW_MOUSE_BUTTON_2 && press)
+					{
+						printf("Mouse two pressed\n");
+						Physics::Fluid::FluidSimulation::getInstace().setInputStrength(-300);
+					}
+					else
+					{
+						printf("Mouse buttons released\n");
+						Physics::Fluid::FluidSimulation::getInstace().setInputStrength(0);
+					}
+				});
+
 
 			}
 			auto simEnd = std::chrono::steady_clock::now();
@@ -197,6 +231,9 @@ namespace Game
 			Physics::Fluid::FluidSimulation::getInstace().setSimulationTime((float)simElapsed);
 
 			auto colorUpdateStart = std::chrono::steady_clock::now();
+			// --------------------------------------------------------------------------------------------
+			// Update Colors and Transition
+			// --------------------------------------------------------------------------------------------
 			std::for_each(std::execution::par, particles.begin(), particles.end(),
 				[this, blue, red, &colors, &transforms](uint32_t i)
 				{
@@ -207,10 +244,14 @@ namespace Game
 
 					transforms[i] = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(i), -6.0f));
 				});
+			// --------------------------------------------------------------------------------------------
 			auto colorUpdateEnd = std::chrono::steady_clock::now();
 			colorElapsed = std::chrono::duration<double>(colorUpdateEnd - colorUpdateStart).count() * 1000.0f;
 
 			auto renderStart = std::chrono::steady_clock::now();
+			// --------------------------------------------------------------------------------------------
+			// Temporarly rendering of particles
+			// --------------------------------------------------------------------------------------------
 			circle.bindVAO();
 			for (int i = 0; i < nrParticles; i++)
 			{
@@ -220,6 +261,7 @@ namespace Game
 
 			}
 			circle.unBindVAO();
+			// --------------------------------------------------------------------------------------------
 
 			//shader.Disable();
 
@@ -232,31 +274,31 @@ namespace Game
 			//	{ 0, 0, 1, 0 },
 			//	Cam.GetViewMatrix()[3]
 			//);
-			//glm::mat4 billboardViewProjection = /*glm::project*/ * billboardView;
+			//glm::mat4 billboardViewProjection = Cam.GetProjection() * billboardView;
 
-			//glUniformMatrix4fv(glGetUniformLocation(programHandle, "ViewProjection"), 1, false, &mainCamera->viewProjection[0][0]);
-			//glUniformMatrix4fv(glGetUniformLocation(programHandle, "BillBoardViewProjection"), 1, false, &billboardViewProjection[0][0]);
-			//GLuint particleOffsetLoc = glGetUniformLocation(programHandle, "ParticleOffset");
+			//glUniformMatrix4fv(glGetUniformLocation(particleShader.GetProgram(), "ViewProjection"), 1, false, &Cam.GetViewProjection()[0][0]);
+			//glUniformMatrix4fv(glGetUniformLocation(particleShader.GetProgram(), "BillBoardViewProjection"), 1, false, &billboardViewProjection[0][0]);
+			//GLuint particleOffsetLoc = glGetUniformLocation(particleShader.GetProgram(), "ParticleOffset");
 
-			//for (auto emitter : particles->emitters)
-			//{ // DRAW
-			//	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, emitter->bufPositions[readIndex]);
-			//	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, emitter->bufColors[readIndex]);
+			////for (auto emitter : particles->emitters)
+			////{ // DRAW
+			////	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, emitter->bufPositions[readIndex]);
+			////	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, emitter->bufColors[readIndex]);
 
-			//	// Split drawcalls into smaller bits, since integer division on AMD cards is inaccurate
-			//	int numVerts = emitter->data.numParticles * 6;
-			//	const int numVertsPerDrawCall = 0x44580; // has to be divisible with 6
-			//	int numDrawCalls = emitter->data.numParticles / numVertsPerDrawCall;
-			//	int particleOffset = 0;
-			//	while (numVerts > 0)
-			//	{
-			//		int drawVertCount = glm::min(numVerts, numVertsPerDrawCall);
-			//		glUniform1i(particleOffsetLoc, particleOffset);
-			//		glDrawArrays(GL_TRIANGLES, 0, drawVertCount);
-			//		numVerts -= drawVertCount;
-			//		particleOffset += drawVertCount / 6;
-			//	}
-			//}
+			////	// Split drawcalls into smaller bits, since integer division on AMD cards is inaccurate
+			////	int numVerts = emitter->data.numParticles * 6;
+			////	const int numVertsPerDrawCall = 0x44580; // has to be divisible with 6
+			////	int numDrawCalls = emitter->data.numParticles / numVertsPerDrawCall;
+			////	int particleOffset = 0;
+			////	while (numVerts > 0)
+			////	{
+			////		int drawVertCount = glm::min(numVerts, numVertsPerDrawCall);
+			////		glUniform1i(particleOffsetLoc, particleOffset);
+			////		glDrawArrays(GL_TRIANGLES, 0, drawVertCount);
+			////		numVerts -= drawVertCount;
+			////		particleOffset += drawVertCount / 6;
+			////	}
+			////}
 
 
 			//particleShader.Disable();
@@ -270,12 +312,12 @@ namespace Game
 			plane2.renderMesh(0);
 			plane2.unBindVAO();
 
-			shader.setVec4("color", glm::vec4(0.3f, 0.8f, 0.0f, 0.2f));
-			trans = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getMousePosition(), -6.0f));
-			shader.setMat4("model", trans);
-			plane2.bindVAO();
-			plane2.renderMesh(0);
-			plane2.unBindVAO();
+			//shader.setVec4("color", glm::vec4(0.3f, 0.8f, 0.0f, 0.2f));
+			//trans = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getMousePosition(), -6.0f));
+			//shader.setMat4("model", trans);
+			//plane2.bindVAO();
+			//plane2.renderMesh(0);
+			//plane2.unBindVAO();
 
 			//BOUND
 			glm::vec2 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();

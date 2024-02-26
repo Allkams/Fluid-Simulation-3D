@@ -63,6 +63,9 @@ namespace Physics
 			void setMousePosition(glm::vec2 pos);
 			glm::vec2 getMousePosition();
 
+			void setInputStrength(float value);
+			float getInputStrength();
+
 			void setBound(const glm::vec2& value);
 			glm::vec2 getBounds();
 
@@ -94,7 +97,7 @@ namespace Physics
 
 			glm::vec2 InteractionMousePoint = {0,0};
 			float InteractionInputStrength = 0.0f;
-			float InteractionInputRadius = 0.8f;
+			float InteractionInputRadius = 0.99f;
 
 			uint32 numParticles;
 			std::vector<uint32> pList;

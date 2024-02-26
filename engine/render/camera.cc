@@ -43,6 +43,7 @@ namespace RenderUtils
 	{
 		View = glm::lookAt(Position, Position + ForwardVector, glm::vec3(0, 1.0f, 0));
 		InvView = glm::inverse(View);
+		setViewProjection();
 	}
 
 	glm::mat4 Camera::GetViewMatrix()
@@ -59,6 +60,7 @@ namespace RenderUtils
 	{
 		Projection = glm::perspective(glm::radians(90.0f), width / height, near, far);
 		InvProjection = glm::inverse(Projection);
+		setViewProjection();
 	}
 
 	glm::mat4 Camera::GetProjection()
@@ -69,6 +71,22 @@ namespace RenderUtils
 	glm::mat4 Camera::GetInvProjection()
 	{
 		return InvProjection;
+	}
+
+	glm::mat4 Camera::GetViewProjection()
+	{
+		return ViewProjection;
+	}
+
+	glm::mat4 Camera::GetInvViewProjection()
+	{
+		return InvViewProjection;
+	}
+
+	void Camera::setViewProjection()
+	{
+		this->ViewProjection = this->Projection * this->View;
+		this->InvViewProjection = glm::inverse(ViewProjection);
 	}
 
 	void Camera::Move(CameraMovement direction, float deltaTime)

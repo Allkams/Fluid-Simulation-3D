@@ -56,6 +56,8 @@ namespace RenderUtils
 		void setProjection(float width, float height, float near, float far);
 		glm::mat4 GetProjection();
 		glm::mat4 GetInvProjection();
+		glm::mat4 GetViewProjection();
+		glm::mat4 GetInvViewProjection();
 
 		void Move(CameraMovement direction, float deltaTime);
 		void Look(float xOffset, float yOffset, GLboolean constrainPitch = true);
@@ -65,6 +67,9 @@ namespace RenderUtils
 		glm::mat4 InvView;
 		glm::mat4 Projection;
 		glm::mat4 InvProjection;
+		void setViewProjection();
+		glm::mat4 ViewProjection;
+		glm::mat4 InvViewProjection;
 		void updateCamera();
 	};
 }

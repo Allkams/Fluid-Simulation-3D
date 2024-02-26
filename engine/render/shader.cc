@@ -125,6 +125,11 @@ void Shader::Disable()
 {
 	glUseProgram(0);
 }
+GLuint Shader::GetProgram()
+{
+	return this->ID;
+}
+
 
 void Shader::setBool(const std::string& name, bool value) const
 {

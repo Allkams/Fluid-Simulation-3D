@@ -39,11 +39,7 @@ namespace Physics
 			std::for_each(std::execution::par, pList.begin(), pList.end(),
 				[this, deltatime](uint32_t i)
 			{
-				if (gravity)
-				{
-					velocity[i] += CalculateExternalFoce(positions[i], velocity[i]) * deltatime;
-					//velocity[i].y -= gravityScale * deltatime;
-				}
+				velocity[i] += CalculateExternalFoce(positions[i], velocity[i]) * deltatime;
 				predictedPositions[i] = positions[i] + velocity[i] * (1.0f / 120.0f);
 				//WriteIndex = readIndex;
 			});
@@ -259,6 +255,16 @@ namespace Physics
 			return InteractionMousePoint;
 		}
 
+		void FluidSimulation::setInputStrength(float value)
+		{
+			InteractionInputStrength = value;
+		}
+
+		float FluidSimulation::getInputStrength()
+		{
+			return InteractionInputStrength;
+		}
+
 		void FluidSimulation::setBound(const glm::vec2& value)
 		{
 			Bound = value;
@@ -280,7 +286,12 @@ namespace Physics
 
 		glm::vec2 FluidSimulation::CalculateExternalFoce(const glm::vec2& pos, const glm::vec2& vel)
 		{
-			glm::vec2 gravityAccel = { 0, -gravityScale };
+			glm::vec2 gravityAccel = {0,0};
+			
+			if (gravity)
+			{
+				gravityAccel = { 0, -gravityScale };
+			}
 
 			if (InteractionInputStrength != 0)
 			{
