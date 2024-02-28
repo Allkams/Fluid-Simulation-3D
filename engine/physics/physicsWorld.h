@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include "boundary.h"
 #include "spatialStruct.h"
 
 namespace Physics
@@ -117,7 +116,7 @@ namespace Physics
 
 			const glm::vec2 offsets[9] = { {-1,-1}, {0, -1 }, {1, -1}, {-1, 0}, {0,0}, {1, 0}, {-1, 1}, {0,1}, {1,1} };
 
-			glm::vec2 Bound = { 16,9 };
+			glm::vec2 Bound = { 21,11 };
 
 			void GridArrangement(int rowSize, float gap);
 			void RandomArrangement(int gap);

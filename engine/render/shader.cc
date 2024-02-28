@@ -118,11 +118,13 @@ void Shader::Destroy()
 
 void Shader::Enable()
 {
+	//printf("Program %i is active\n", (int)this->ID);
 	glUseProgram(this->ID);
 }
 
 void Shader::Disable()
 {
+	//printf("Program %i is deactivated\n", (int)this->ID);
 	glUseProgram(0);
 }
 GLuint Shader::GetProgram()

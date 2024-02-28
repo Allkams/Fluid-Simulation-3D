@@ -5,8 +5,6 @@ SET(files_physics
 	kernels.h
 	spatialStruct.cc
 	spatialStruct.h
-	boundary.cc
-	boundary.h
     )
 SOURCE_GROUP("physics" FILES ${files_physics})
 	

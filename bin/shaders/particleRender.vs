@@ -18,20 +18,20 @@ layout(std430, binding = 1) readonly buffer ReadBlockColor
 };
 
 const vec3 TriBaseVerts[] = {
-    vec3(0.5, 0.5, 0),
-    vec3(-0.5, 0.5, 0),
-    vec3(-0.5, -0.5, 0),
-    vec3(0.5, 0.5, 0),
-    vec3(-0.5, -0.5, 0),
-    vec3(0.5, -0.5, 0)
+	vec3(0.5, 0.5, 0),
+	vec3(-0.5, 0.5, 0),
+	vec3(-0.5, -0.5, 0),
+	vec3(0.5, 0.5, 0),
+	vec3(-0.5, -0.5, 0),
+	vec3(0.5, -0.5, 0)
 };
 
 void main()
 {
     int localIndex = gl_VertexID % 6;
     int index1D = ParticleOffset + gl_VertexID / 6;
-    vec4 translation = vec4(ReadPosAndScale[index1D].xy, 0, 1);
-    float scale = 1;
+    vec4 translation = vec4(ReadPosAndScale[index1D], -6.0, 1);
+    float scale = 0.025;
     vec4 projectVertexPos = BillBoardViewProj * vec4(TriBaseVerts[localIndex] * scale, 0);
     gl_Position = ViewProj * translation + projectVertexPos;
     Color = ReadColors[index1D];
