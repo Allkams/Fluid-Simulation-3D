@@ -91,7 +91,7 @@ namespace Game
 		glm::vec2 winSize = window->getSize();
 		//PreWork
 		RenderUtils::Camera Cam(glm::vec3(0));
-		nrParticles = 10000;
+		nrParticles = 10;
 		Physics::Fluid::FluidSimulation::getInstace().InitializeData(nrParticles);
 		std::vector<uint32_t> particles;
 		for (int i = 0; i < nrParticles; i++)
