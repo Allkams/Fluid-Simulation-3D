@@ -6,7 +6,6 @@ uniform mat4 BillBoardViewProj;
 uniform int ParticleOffset;
 
 out vec4 Color;
-out vec4 Position;
 
 layout(std430, binding = 0) readonly buffer Positions
 {
@@ -36,6 +35,4 @@ void main()
     vec4 projectVertexPos = BillBoardViewProj * vec4(TriBaseVerts[localIndex] * scale, 0);
     gl_Position = ViewProj * translation + projectVertexPos;
     Color = ReadColors[index1D];
-    Position = ViewProj * translation + projectVertexPos;
-
 }
