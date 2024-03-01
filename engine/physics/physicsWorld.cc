@@ -45,26 +45,26 @@ namespace Physics
 				//WriteIndex = readIndex;
 			});
 
-			//UpdateSpatialLookup();
+			UpdateSpatialLookup();
 
-			//updateDensities();
-
-			/*std::for_each(std::execution::par, pList.begin(), pList.end(),
-				[this, deltatime](uint32_t i)
-			{
-				CalculatePressureForce(i, deltatime);
-			});*/
-
-			/*std::for_each(std::execution::par, pList.begin(), pList.end(),
-				[this, deltatime](uint32_t i)
-			{
-				CalculateViscosityForce(i, deltatime);
-			});*/
+			updateDensities();
 
 			std::for_each(std::execution::par, pList.begin(), pList.end(),
 				[this, deltatime](uint32_t i)
 			{
-				positions[i] +=  velocity[i] * deltatime;
+				CalculatePressureForce(i, deltatime);
+			});
+
+			std::for_each(std::execution::par, pList.begin(), pList.end(),
+				[this, deltatime](uint32_t i)
+			{
+				CalculateViscosityForce(i, deltatime);
+			});
+
+			std::for_each(std::execution::par, pList.begin(), pList.end(),
+				[this, deltatime](uint32_t i)
+			{
+				positions[i] += velocity[i] * deltatime;
 				
 				/*glm::mat4 modelMatrix = glm::translate(positions[i]);
 
@@ -91,7 +91,7 @@ namespace Physics
 					positions[i].z = halfSize.z * glm::sign(positions[i].z);
 					velocity[i].z *= -1 * dampFactor;
 				}
-
+				OutPositions[i] = glm::vec4(positions[i], 0.1f);
 				/*positions[i] = modelMatrix * glm::vec4(positions[i], 1.0f);
 				velocity[i] = modelMatrix * glm::vec4(velocity[i], 0.0f);*/
 
@@ -118,13 +118,15 @@ namespace Physics
 			for (int i = 0; i < particleAmmount; i++)
 			{
 				positions.push_back({ 0,0,0 });
+				OutPositions.push_back({ 0,0,0, 0.25f });
 				velocity.push_back({ 0,0,0 });
 				predictedPositions.push_back({ 0,0,0 });
 				densities.push_back({ 0,0 });
 			}
 
-			int RowSize = ceil(pow(particleAmmount, (1.0f / 3.0f)));
-			float gap = 1;//0.115f;
+			int RowSize = powf(particleAmmount, (1.0f / 3.0f));
+			//int RowSize = ceil(glm::sqrt(particleAmmount));
+			float gap = 0.215f;
 			switch (type)
 			{
 			case Physics::Fluid::GRID:
@@ -536,9 +538,9 @@ namespace Physics
 		{
 			int i = 0;
 
-			for (int x = 0; x < particlesPerAxis; x++)
+			for (int y = 0; y < particlesPerAxis; y++)
 			{
-				for (int y = 0; y < particlesPerAxis; y++)
+				for (int x = 0; x < particlesPerAxis; x++)
 				{
 					for (int z = 0; z < particlesPerAxis; z++)
 					{
@@ -553,7 +555,9 @@ namespace Physics
 						float px = (tx - 0.5f) * gap + centre.x;
 						float py = (ty - 0.5f) * gap + centre.y;
 						float pz = (tz - 0.5f) * gap + centre.z;
-						positions[i] = { px * 5.0f, py * 5.0f, pz * 5.0f };
+						positions[i] = { px * 10.0f, py * 10.0f, pz * 10.0f };
+						predictedPositions[i] = { px * 10.0f, py * 10.0f, pz * 10.0f };
+						OutPositions[i] = { px * 10.0f, py * 10.0f, pz * 10.0f, 0.1f };
 						i++;
 					}
 				}

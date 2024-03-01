@@ -99,7 +99,7 @@ namespace Game
 		glm::vec2 winSize = window->getSize();
 		//PreWork
 		RenderUtils::Camera Cam(glm::vec3(0));
-		nrParticles = 10;
+		nrParticles = 2000;
 		Physics::Fluid::FluidSimulation::getInstace().InitializeData(nrParticles);
 		std::vector<uint32_t> particles;
 		for (int i = 0; i < nrParticles; i++)
@@ -150,7 +150,7 @@ namespace Game
 		glGenBuffers(1, &bufColors);
 
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPositions);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec3), &Physics::Fluid::FluidSimulation::getInstace().positions[0], GL_DYNAMIC_DRAW);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &Physics::Fluid::FluidSimulation::getInstace().OutPositions[0], GL_DYNAMIC_DRAW);
 
 		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufVelocities);
 		//glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), NULL, GL_DYNAMIC_DRAW);
@@ -158,10 +158,13 @@ namespace Game
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufColors);
 		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &colors[0], GL_DYNAMIC_DRAW);
 
-		Cam.Position = { 20, 0, 0 };
+		//Cam.Position = { 20, 0, 0 };
+		Cam.Position = { 10, 15, 10 };
 		Cam.Target = { 0,0,0 };
 		Cam.setViewMatrix(true);
+		Cam.shouldTarget = true;
 		Cam.setViewProjection();
+		shader.setMat4("view", Cam.GetViewMatrix());
 
 		deltatime = 0.016667f;
 		while (this->window->IsOpen())
@@ -190,6 +193,33 @@ namespace Game
 				this->window->Close();
 				break;
 			}
+
+			if (this->window->ProcessInput(GLFW_KEY_W))
+			{
+				Cam.Move(RenderUtils::FORWARD, deltatime);
+			}
+			if (this->window->ProcessInput(GLFW_KEY_S))
+			{
+				Cam.Move(RenderUtils::BACKWARD, deltatime);
+			}
+			if (this->window->ProcessInput(GLFW_KEY_A))
+			{
+				Cam.Move(RenderUtils::LEFT, deltatime);
+			}
+			if (this->window->ProcessInput(GLFW_KEY_D))
+			{
+				Cam.Move(RenderUtils::RIGHT, deltatime);
+			}
+			if (this->window->ProcessInput(GLFW_KEY_Q))
+			{
+				Cam.Move(RenderUtils::UP, deltatime);
+			}
+			if (this->window->ProcessInput(GLFW_KEY_E))
+			{
+				Cam.Move(RenderUtils::DOWN, deltatime);
+			}
+			Cam.setViewMatrix(true);
+			shader.setMat4("view", Cam.GetViewMatrix());
 
 			if (this->window->ProcessInput(GLFW_KEY_SPACE) && isRunning)
 			{
@@ -299,7 +329,7 @@ namespace Game
 			/*glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::vec3), &Physics::Fluid::FluidSimulation::getInstace().positions[0], GL_STATIC_DRAW);*/
 
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPositions);
-			glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec3), &Physics::Fluid::FluidSimulation::getInstace().positions[0], GL_DYNAMIC_DRAW);
+			glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &Physics::Fluid::FluidSimulation::getInstace().OutPositions[0], GL_DYNAMIC_DRAW);
 
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufColors);
 			glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &colors[0], GL_DYNAMIC_DRAW);
@@ -497,7 +527,7 @@ namespace Game
 			int b[3] = {bound.x, bound.y, bound.z};
 			if (ImGui::SliderInt3("Bounding Volume", b, 0.0f, 22.0f))
 			{
-				Physics::Fluid::FluidSimulation::getInstace().setBound({b[0], b[1], b[3]});
+				Physics::Fluid::FluidSimulation::getInstace().setBound({b[0], b[1], b[2]});
 			}
 
 			ImGui::End();

@@ -69,6 +69,7 @@ namespace Physics
 			glm::vec3 getBounds();
 
 			std::vector<glm::vec3> positions;
+			std::vector<glm::vec4> OutPositions;
 		private:
 
 			void updateDensities();

@@ -26,7 +26,9 @@ namespace RenderUtils
 		FORWARD,
 		BACKWARD,
 		LEFT,
-		RIGHT
+		RIGHT,
+		DOWN,
+		UP
 	};
 
 	class Camera
@@ -38,12 +40,13 @@ namespace RenderUtils
 		glm::vec3 RightVector;
 		glm::vec3 WorldUpVector;
 		glm::vec3 Target;
+		bool shouldTarget = false;
 
 
 		float Yaw;
 		float Pitch;
 
-		float MovementSpeed;
+		float MovementSpeed = 5.0f;
 		float MouseSensitivity;
 		float FOV = 45.0f;
 

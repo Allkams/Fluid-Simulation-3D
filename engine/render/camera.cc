@@ -19,7 +19,7 @@
 
 namespace RenderUtils
 {
-	Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : ForwardVector(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(2.5f), MouseSensitivity(0.1f), FOV(45.0f)
+	Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : ForwardVector(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(6.5f), MouseSensitivity(0.1f), FOV(45.0f)
 	{
 		Position = position;
 		WorldUpVector = up;
@@ -108,6 +108,10 @@ namespace RenderUtils
 			Position -= RightVector * velocity;
 		if (direction == RIGHT)
 			Position += RightVector * velocity;
+		if (direction == DOWN)
+			Position += glm::vec3(0,1,0) *velocity;
+		if (direction == UP)
+			Position += glm::vec3(0, -1, 0) * velocity;
 
 		updateCamera();
 	}
@@ -144,9 +148,16 @@ namespace RenderUtils
 	{
 		// calculate the new forward vector
 		glm::vec3 forwardVec = glm::vec3(0);
-		forwardVec.x = cos(glm::radians(Yaw)) * sin(glm::radians(Pitch));
-		forwardVec.y = sin(glm::radians(Pitch));
-		forwardVec.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+		if (shouldTarget)
+		{
+			forwardVec = Target - Position;
+		}
+		else
+		{
+			forwardVec.x = cos(glm::radians(Yaw)) * sin(glm::radians(Pitch));
+			forwardVec.y = sin(glm::radians(Pitch));
+			forwardVec.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+		}
 		ForwardVector = glm::normalize(forwardVec);
 		// also re-calculate the Right and Up vector
 		RightVector = glm::normalize(glm::cross(ForwardVector, WorldUpVector));
