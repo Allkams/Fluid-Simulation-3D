@@ -88,6 +88,14 @@ namespace Game
 	bool GameApp::Run()
 	{
 
+		/*TODO LIST
+		*  - Implement a 3D bound
+		*  - Make the 3D Bound rotatable when pressing shift
+		*  - Make camera movement when pressing ctrl
+		*  - 
+		*
+		*/
+
 		glm::vec2 winSize = window->getSize();
 		//PreWork
 		RenderUtils::Camera Cam(glm::vec3(0));
@@ -116,7 +124,7 @@ namespace Game
 		shader.setMat4("project", Cam.GetProjection());
 		Render::Mesh plane2 = Render::CreateCircle(0.35f, 12);
 		//Solve this problem...
-		Render::Mesh plane3 = Render::CreatePlane(1.0f, 1.0f);
+		Render::Mesh plane3 = Render::CreateCube(1.0f, 1.0f, 1.0f);
 		glEnable(GL_DEPTH_TEST);
 
 		glm::vec4 red = { 1.0f, 0.0f, 0.0f, 1.0f };
@@ -142,7 +150,7 @@ namespace Game
 		glGenBuffers(1, &bufColors);
 
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPositions);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec2), &Physics::Fluid::FluidSimulation::getInstace().positions[0], GL_DYNAMIC_DRAW);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec3), &Physics::Fluid::FluidSimulation::getInstace().positions[0], GL_DYNAMIC_DRAW);
 
 		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufVelocities);
 		//glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), NULL, GL_DYNAMIC_DRAW);
@@ -150,7 +158,10 @@ namespace Game
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufColors);
 		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &colors[0], GL_DYNAMIC_DRAW);
 
-
+		Cam.Position = { 20, 0, 0 };
+		Cam.Target = { 0,0,0 };
+		Cam.setViewMatrix(true);
+		Cam.setViewProjection();
 
 		deltatime = 0.016667f;
 		while (this->window->IsOpen())
@@ -197,52 +208,52 @@ namespace Game
 				Physics::PhysicsWorld::getInstace().update(deltatime);
 
 				// MOUSE POSITION:
-				float64 x;
-				float64 y;
-				this->window->GetMousePos(x,y);
-				float xNDC = (2.0f * x) / winSize.x - 1.0f;
-				float yNDC = 1.0f - (2.0f * y) / winSize.y;
+				//float64 x;
+				//float64 y;
+				//this->window->GetMousePos(x,y);
+				//float xNDC = (2.0f * x) / winSize.x - 1.0f;
+				//float yNDC = 1.0f - (2.0f * y) / winSize.y;
 
-				glm::vec4 rayClip(xNDC, yNDC, -1.0f, 1.0f);
+				//glm::vec4 rayClip(xNDC, yNDC, -1.0f, 1.0f);
 
-				glm::vec4 rayEye = Cam.GetInvProjection() * rayClip;
-				rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
-				glm::vec4 rayWorld = Cam.GetInvViewMatrix() * rayEye;
-				// --------------------------------------------------------------------------------------------
-				// Needed?
-				// --------------------------------------------------------------------------------------------
-				glm::vec3 rayDirection = glm::normalize(glm::vec3(rayWorld));
-				
-				glm::vec3 dir = glm::vec3(0, 0, -1);
+				//glm::vec4 rayEye = Cam.GetInvProjection() * rayClip;
+				//rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
+				//glm::vec4 rayWorld = Cam.GetInvViewMatrix() * rayEye;
+				//// --------------------------------------------------------------------------------------------
+				//// Needed?
+				//// --------------------------------------------------------------------------------------------
+				//glm::vec3 rayDirection = glm::normalize(glm::vec3(rayWorld));
+				//
+				//glm::vec3 dir = glm::vec3(0, 0, -1);
 
-				glm::vec3 P = dir * 6.0f;
+				//glm::vec3 P = dir * 6.0f;
 
-				float t = glm::dot(P - Cam.Position, dir) / glm::dot(rayDirection, dir);
+				//float t = glm::dot(P - Cam.Position, dir) / glm::dot(rayDirection, dir);
 
-				glm::vec3 hitPos = Cam.Position + t * rayDirection;
-				// --------------------------------------------------------------------------------------------
-				//Update mouse world position
-				Physics::Fluid::FluidSimulation::getInstace().setMousePosition({ hitPos.x, hitPos.y });
-				
-				// Listen to Mouse press to give input strength
-				this->window->SetMousePressFunction([this](int32 button, int32 press, int32 sc)
-				{
-					if (button == GLFW_MOUSE_BUTTON_1 && press)
-					{
-						printf("Mouse one pressed\n");
-						Physics::Fluid::FluidSimulation::getInstace().setInputStrength(400);
-					}
-					else if (button == GLFW_MOUSE_BUTTON_2 && press)
-					{
-						printf("Mouse two pressed\n");
-						Physics::Fluid::FluidSimulation::getInstace().setInputStrength(-300);
-					}
-					else
-					{
-						printf("Mouse buttons released\n");
-						Physics::Fluid::FluidSimulation::getInstace().setInputStrength(0);
-					}
-				});
+				//glm::vec3 hitPos = Cam.Position + t * rayDirection;
+				//// --------------------------------------------------------------------------------------------
+				////Update mouse world position
+				//Physics::Fluid::FluidSimulation::getInstace().setMousePosition({ hitPos.x, hitPos.y });
+				//
+				//// Listen to Mouse press to give input strength
+				//this->window->SetMousePressFunction([this](int32 button, int32 press, int32 sc)
+				//{
+				//	if (button == GLFW_MOUSE_BUTTON_1 && press)
+				//	{
+				//		printf("Mouse one pressed\n");
+				//		Physics::Fluid::FluidSimulation::getInstace().setInputStrength(400);
+				//	}
+				//	else if (button == GLFW_MOUSE_BUTTON_2 && press)
+				//	{
+				//		printf("Mouse two pressed\n");
+				//		Physics::Fluid::FluidSimulation::getInstace().setInputStrength(-300);
+				//	}
+				//	else
+				//	{
+				//		printf("Mouse buttons released\n");
+				//		Physics::Fluid::FluidSimulation::getInstace().setInputStrength(0);
+				//	}
+				//});
 
 
 			}
@@ -259,10 +270,21 @@ namespace Game
 				{
 				if (colors.size() > nrParticles || i >= nrParticles) return;
 					float normalized = Physics::Fluid::FluidSimulation::getInstace().getSpeedNormalzied(i);
-					glm::vec4 color = (1.0f - normalized) * blue + normalized * red;
+					glm::vec4 color;
+					if (i != CurrentParticle)
+					{
+						color = (1.0f - normalized) * blue + normalized * red;
+
+					}
+					else
+					{
+						color = {1, 0,1,1};
+
+					}
+
 					colors[i] = color;
 
-					transforms[i] = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(i), -6.0f));
+					//transforms[i] = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(i)));
 				});
 			// --------------------------------------------------------------------------------------------
 			auto colorUpdateEnd = std::chrono::steady_clock::now();
@@ -277,7 +299,7 @@ namespace Game
 			/*glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::vec3), &Physics::Fluid::FluidSimulation::getInstace().positions[0], GL_STATIC_DRAW);*/
 
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPositions);
-			glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec2), &Physics::Fluid::FluidSimulation::getInstace().positions[0], GL_DYNAMIC_DRAW);
+			glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec3), &Physics::Fluid::FluidSimulation::getInstace().positions[0], GL_DYNAMIC_DRAW);
 
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufColors);
 			glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &colors[0], GL_DYNAMIC_DRAW);
@@ -290,7 +312,7 @@ namespace Game
 				Cam.GetViewMatrix()[3]
 			);
 			glm::mat4 billboardViewProjection = Cam.GetProjection() * billboardView;
-
+			Cam.setViewProjection();
 			particleShader.setMat4("ViewProj", Cam.GetViewProjection());
 			particleShader.setMat4("BillBoardViewProj", billboardViewProjection);
 			GLuint particleOffsetLoc = glGetUniformLocation(particleShader.GetProgram(), "ParticleOffset");
@@ -324,20 +346,25 @@ namespace Game
 			shader.setMat4("view", Cam.GetViewMatrix());
 			shader.setMat4("project", Cam.GetProjection());
 
-			shader.setVec4("color", glm::vec4(0.3f, 0.0f, 0.0f, 0.2f));
-			glm::mat4 trans = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(CurrentParticle), -6.0f));
-			shader.setMat4("model", trans);
-			plane2.bindVAO();
-			plane2.renderMesh(0);
-			plane2.unBindVAO();
+			//shader.setVec4("color", glm::vec4(0.3f, 0.0f, 0.0f, 0.2f));
+			//glm::mat4 trans = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(CurrentParticle)));
+			//shader.setMat4("model", trans);
+			//plane2.bindVAO();
+			//plane2.renderMesh(0);
+			//plane2.unBindVAO();
 
 			//BOUND
-			glm::vec2 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();
+			glm::vec3 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();
 			shader.setVec4("color", glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
-			trans = glm::translate(glm::vec3(0.0f,0.0f, -6.0f)) * glm::scale(glm::vec3(bound, 0.0f));
+			trans = glm::translate(glm::vec3(0.0f,0.0f, 0.0f)) * glm::scale(bound);
 			shader.setMat4("model", trans);
 			plane3.bindVAO();
+			glPolygonMode(GL_FRONT, GL_LINE);
+			glPolygonMode(GL_BACK, GL_LINE);
 			plane3.renderMesh(0);
+			
+			glPolygonMode(GL_FRONT, GL_FILL);
+			glPolygonMode(GL_BACK, GL_FILL);
 			plane3.unBindVAO();
 
 			Cam.setViewProjection();
@@ -391,9 +418,12 @@ namespace Game
 				}
 				CurrentParticle = targetSphere;
 			}
-			ImGui::Text("  Position: (%f, %f)", Physics::Fluid::FluidSimulation::getInstace().getPosition(CurrentParticle).x, Physics::Fluid::FluidSimulation::getInstace().getPosition(CurrentParticle).y);
-			ImGui::Text("  Velocity: (%f, %f)", Physics::Fluid::FluidSimulation::getInstace().getVelocity(CurrentParticle).x, Physics::Fluid::FluidSimulation::getInstace().getVelocity(CurrentParticle).y);
+			glm::vec3 pos = Physics::Fluid::FluidSimulation::getInstace().getPosition(CurrentParticle);
+			glm::vec3 vel = Physics::Fluid::FluidSimulation::getInstace().getVelocity(CurrentParticle);
+			ImGui::Text("  Position: (%f, %f, %f)", pos.x, pos.y, pos.z);
+			ImGui::Text("  Velocity: (%f, %f, %f)", vel.x, vel.y, vel.z);
 			ImGui::Text("  Density: (%f)", Physics::Fluid::FluidSimulation::getInstace().getDensity(CurrentParticle));
+			ImGui::Text("  Near Density: (%f)", Physics::Fluid::FluidSimulation::getInstace().getNearDensity(CurrentParticle));
 
 			ImGui::NewLine();
 			bool gravity = Physics::Fluid::FluidSimulation::getInstace().getGravityStatus();
@@ -463,11 +493,11 @@ namespace Game
 				Physics::Fluid::FluidSimulation::getInstace().setGravityScale(gravityScale);
 			}
 
-			glm::vec2 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();
-			int b[2] = {bound.x, bound.y};
-			if (ImGui::SliderInt2("Bounding Volume", b, 0.0f, 22.0f))
+			glm::vec3 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();
+			int b[3] = {bound.x, bound.y, bound.z};
+			if (ImGui::SliderInt3("Bounding Volume", b, 0.0f, 22.0f))
 			{
-				Physics::Fluid::FluidSimulation::getInstace().setBound({b[0], b[1] });
+				Physics::Fluid::FluidSimulation::getInstace().setBound({b[0], b[1], b[3]});
 			}
 
 			ImGui::End();

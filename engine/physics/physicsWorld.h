@@ -26,10 +26,10 @@ namespace Physics
 
 			void Update(float deltatime);
 
-			void InitializeData(int particleAmmount, glm::vec2 Centre = { 0,0 }, Arrangements type = Arrangements::GRID);
+			void InitializeData(int particleAmmount, glm::vec3 Centre = { 0,0 ,0}, Arrangements type = Arrangements::GRID);
 
-			glm::vec2 getPosition(uint32 particleIndex);
-			glm::vec2 getVelocity(uint32 particleIndex);
+			glm::vec3 getPosition(uint32 particleIndex);
+			glm::vec3 getVelocity(uint32 particleIndex);
 			float getDensity(uint32 particleIndex);
 			float getNearDensity(uint32 particleIndex);
 			float getSpeed(uint32 particleIndex);
@@ -59,23 +59,23 @@ namespace Physics
 			void setGravityScale(float value);
 			float getGravityScale();
 
-			void setMousePosition(glm::vec2 pos);
-			glm::vec2 getMousePosition();
+			/*void setMousePosition(glm::vec3 pos);
+			glm::vec3 getMousePosition();
 
 			void setInputStrength(float value);
-			float getInputStrength();
+			float getInputStrength();*/
 
-			void setBound(const glm::vec2& value);
-			glm::vec2 getBounds();
+			void setBound(const glm::vec3& value);
+			glm::vec3 getBounds();
 
-			std::vector<glm::vec2> positions;
+			std::vector<glm::vec3> positions;
 		private:
 
 			void updateDensities();
 
-			glm::vec2 CalculateExternalFoce(const glm::vec2& pos, const glm::vec2& vel);
+			glm::vec3 CalculateExternalFoce(const glm::vec3& pos, const glm::vec3& vel);
 
-			glm::vec2 CalculateDensity(const glm::vec2& pos);
+			glm::vec2 CalculateDensity(const glm::vec3& pos);
 			float ConvertDensityToPressure(float density);
 			float ConvertNearDensityToPressure(float nearDensity);
 
@@ -95,30 +95,44 @@ namespace Physics
 			bool gravity = false;
 			float gravityScale = 10.0f;
 
-			glm::vec2 InteractionMousePoint = {0,0};
+			/*glm::vec3 InteractionMousePoint = {0,0, 0};
 			float InteractionInputStrength = 0.0f;
-			float InteractionInputRadius = 0.99f;
+			float InteractionInputRadius = 0.99f;*/
 
 			uint32 numParticles;
 			std::vector<uint32> pList;
 
-			std::vector<glm::vec2> predictedPositions;
-			std::vector<glm::vec2> velocity;
+			std::vector<glm::vec3> predictedPositions;
+			std::vector<glm::vec3> velocity;
 
 			std::vector<glm::vec2> densities; // density, neardensity
 
-			glm::vec2 PositionToCellCoord(const glm::vec2& pos);
-			uint32_t HashCell(int X, int Y);
+			glm::vec3 PositionToCellCoord(const glm::vec3& pos);
+			uint32_t HashCell(int X, int Y, int Z);
 			uint32_t GetKeyFromHash(const uint32_t hash, const uint32_t spatialLength);
 
 			std::vector<SpatialStruct> spatialLookup;
 			std::vector<uint32_t> startIndices;
 
-			const glm::vec2 offsets[9] = { {-1,-1}, {0, -1 }, {1, -1}, {-1, 0}, {0,0}, {1, 0}, {-1, 1}, {0,1}, {1,1} };
+			const glm::vec3 offsets[27] = { 
+				{-1, -1, -1}, {-1, -1, 0}, {-1, -1, 1}, 
+				{-1, 0, -1}, {-1, 0, 0}, {-1, 0, 1},
+				{-1, 1, -1}, {-1, 1, 0}, {-1, 1 ,1},
 
-			glm::vec2 Bound = { 21,11 };
+				{0, -1, -1}, {0, -1, 0}, {0, -1, 1},
+				{0, 0, -1}, {0, 0, 0}, {0, 0, 1},
+				{0, 1, -1}, {0, 1, 0}, {0, 1, 1},
 
-			void GridArrangement(int rowSize, float gap);
+				{1, -1, -1}, {1, -1, 0}, {1, -1, 1},
+				{1, 0, -1}, {1, 0, 0}, {1, 0, 1},
+				{1, 1, -1}, {1, 1, 0}, {1, 1, 1}
+			};
+
+			glm::vec3 BoundScale = { 20, 10, 20 };
+			glm::mat4 boundTransform = glm::mat4(1);
+			glm::quat boundRotation = glm::identity<glm::quat>();
+
+			void GridArrangement(int particlesPerAxel, float gap, const glm::vec3& centre = glm::vec3(0, 0, 0));
 			void RandomArrangement(int gap);
 			void CircleArrangement();
 

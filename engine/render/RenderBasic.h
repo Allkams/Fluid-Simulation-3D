@@ -61,7 +61,7 @@ namespace Render
 
 		Mesh(std::vector<Vertice> Vertices, std::vector<GLuint> indices, std::vector<Primitive> primitives);
 
-		void renderMesh(GLuint primitiveIndex);
+		void renderMesh(GLuint primitiveIndex, GLenum RenderType = GL_TRIANGLES);
 
 		void clearBuffers();
 		void bindVAO();

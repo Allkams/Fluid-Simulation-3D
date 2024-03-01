@@ -39,10 +39,18 @@ namespace RenderUtils
 		updateCamera();
 	}
 
-	void Camera::setViewMatrix()
+	void Camera::setViewMatrix(bool FocusTarget)
 	{
+		if (FocusTarget)
+		{
+			View = glm::lookAt(Position, Target, glm::vec3(0, 1.0f, 0));
+			InvView = glm::inverse(View);
+			return;
+		}
+
 		View = glm::lookAt(Position, Position + ForwardVector, glm::vec3(0, 1.0f, 0));
 		InvView = glm::inverse(View);
+		
 		//setViewProjection();
 	}
 

@@ -9,7 +9,7 @@ out vec4 Color;
 
 layout(std430, binding = 0) readonly buffer Positions
 {
-    vec2 ReadPosAndScale[];
+    vec3 ReadPosAndScale[];
 };
 
 layout(std430, binding = 1) readonly buffer ReadBlockColor
@@ -30,8 +30,8 @@ void main()
 {
     int localIndex = gl_VertexID % 6;
     int index1D = ParticleOffset + gl_VertexID / 6;
-    vec4 translation = vec4(ReadPosAndScale[index1D], -6.0, 1);
-    float scale = 5.0;
+    vec4 translation = vec4(ReadPosAndScale[index1D].xyz , 1);
+    float scale = 0.25;
     vec4 projectVertexPos = BillBoardViewProj * vec4(TriBaseVerts[localIndex] * scale, 0);
     gl_Position = ViewProj * translation + projectVertexPos;
     Color = ReadColors[index1D];
