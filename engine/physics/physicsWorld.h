@@ -86,7 +86,7 @@ namespace Physics
 			void UpdateSpatialLookup();
 
 			float interactionRadius = 0.35f;
-			float TargetDensity = 60.0f;
+			float TargetDensity = 99.9f;
 			float pressureMultiplier = 300.0f;
 			float nearPressureMultiplier = 20.0f;
 			float viscosityStrength = 0.5f;
@@ -129,7 +129,7 @@ namespace Physics
 				{1, 1, -1}, {1, 1, 0}, {1, 1, 1}
 			};
 
-			glm::vec3 BoundScale = { 20, 10, 20 };
+			glm::vec3 BoundScale = { 10, 10, 10 };
 			glm::mat4 boundTransform = glm::mat4(1);
 			glm::quat boundRotation = glm::identity<glm::quat>();
 

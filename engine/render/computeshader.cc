@@ -1,9 +1,9 @@
 #include "config.h"
-#include "computeshader.h"
+#include "ComputeShader.h"
 
 namespace Render
 {
-	computeShader::computeShader(const char* computePath)
+	ComputeShader::ComputeShader(const char* computePath)
 	{
 		std::string  computeCode;
 		std::ifstream cShaderFile;
@@ -38,7 +38,7 @@ namespace Render
 	}
 
 
-	void computeShader::checkCompileErrors(GLuint shader, std::string type)
+	void ComputeShader::checkCompileErrors(GLuint shader, std::string type)
 	{
 		GLint success;
 		GLchar infoLog[1024];

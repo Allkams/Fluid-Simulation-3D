@@ -27,6 +27,7 @@
 
 #include "render/RenderBasic.h"
 #include "render/shader.h"
+#include "render/computeshader.h"
 #include "render/camera.h"
 #include "physics/physicsWorld.h"
 
@@ -89,7 +90,7 @@ namespace Game
 	{
 
 		/*TODO LIST
-		*  - Implement a 3D bound
+		*  - Implement a GPU Sort somehow...
 		*  - Make the 3D Bound rotatable when pressing shift
 		*  - Make camera movement when pressing ctrl
 		*  - 
@@ -99,7 +100,7 @@ namespace Game
 		glm::vec2 winSize = window->getSize();
 		//PreWork
 		RenderUtils::Camera Cam(glm::vec3(0));
-		nrParticles = 2000;
+		nrParticles = 10000;
 		Physics::Fluid::FluidSimulation::getInstace().InitializeData(nrParticles);
 		std::vector<uint32_t> particles;
 		for (int i = 0; i < nrParticles; i++)
@@ -109,6 +110,10 @@ namespace Game
 
 		Shader shader = Shader("./shaders/VertexShader.vs", "./shaders/FragementShader.fs");
 		Shader particleShader = Shader("./shaders/particleRender.vs", "./shaders/particleRender.fs");
+		//Render::ComputeShader cSpatial = Render::ComputeShader("./shaders/spatialHash.glsl");
+		//Render::ComputeShader cMath = Render::ComputeShader("./shaders/FluidMath.glsl");
+		Render::ComputeShader cParticleShader = Render::ComputeShader("./shaders/compute_particle.glsl");
+		
 		shader.Enable();
 
 		Cam.setProjection(winSize.x, winSize.y, 0.01f, 1000.0f);
@@ -142,21 +147,41 @@ namespace Game
 		transforms.resize(nrParticles);
 
 		GLuint bufPositions/*[2]*/;
-		//GLuint bufVelocities/*[2]*/;
 		GLuint bufColors/*[2]*/;
+		GLuint bufPredictedPos;
+		GLuint bufVelocities/*[2]*/;
+		GLuint bufDensities;
+		GLuint bufSpatialIndices;
+		GLuint bufSpatialOffsets;
 
 		glGenBuffers(1, &bufPositions);
-		//glGenBuffers(1, bufVelocities);
 		glGenBuffers(1, &bufColors);
+		glGenBuffers(1, &bufPredictedPos);
+		glGenBuffers(1, &bufVelocities);
+		glGenBuffers(1, &bufDensities);
+		glGenBuffers(1, &bufSpatialIndices);
+		glGenBuffers(1, &bufSpatialOffsets);
 
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPositions);
 		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &Physics::Fluid::FluidSimulation::getInstace().OutPositions[0], GL_DYNAMIC_DRAW);
 
-		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufVelocities);
-		//glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), NULL, GL_DYNAMIC_DRAW);
-
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufColors);
 		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &colors[0], GL_DYNAMIC_DRAW);
+
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPredictedPos);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), NULL, GL_DYNAMIC_DRAW);
+
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufVelocities);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), NULL, GL_DYNAMIC_DRAW);
+
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufDensities);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec2), NULL, GL_DYNAMIC_DRAW);
+
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufSpatialIndices);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), NULL, GL_DYNAMIC_DRAW);
+
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufSpatialOffsets);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(float), NULL, GL_DYNAMIC_DRAW);
 
 		//Cam.Position = { 20, 0, 0 };
 		Cam.Position = { 10, 15, 10 };
@@ -170,8 +195,8 @@ namespace Game
 		while (this->window->IsOpen())
 		{
 			auto timeStart = std::chrono::steady_clock::now();
-			glClearColor(0.4f, 0.0f, 0.8f, 1.0f);
-			//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			//glClearColor(0.4f, 0.0f, 0.8f, 1.0f);
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 			colors.resize(nrParticles);
 			transforms.resize(nrParticles);
@@ -300,21 +325,7 @@ namespace Game
 				{
 				if (colors.size() > nrParticles || i >= nrParticles) return;
 					float normalized = Physics::Fluid::FluidSimulation::getInstace().getSpeedNormalzied(i);
-					glm::vec4 color;
-					if (i != CurrentParticle)
-					{
-						color = (1.0f - normalized) * blue + normalized * red;
-
-					}
-					else
-					{
-						color = {1, 0,1,1};
-
-					}
-
-					colors[i] = color;
-
-					//transforms[i] = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(i)));
+					colors[i] = (1.0f - normalized) * blue + normalized * red;
 				});
 			// --------------------------------------------------------------------------------------------
 			auto colorUpdateEnd = std::chrono::steady_clock::now();
@@ -375,13 +386,6 @@ namespace Game
 
 			shader.setMat4("view", Cam.GetViewMatrix());
 			shader.setMat4("project", Cam.GetProjection());
-
-			//shader.setVec4("color", glm::vec4(0.3f, 0.0f, 0.0f, 0.2f));
-			//glm::mat4 trans = glm::translate(glm::vec3(Physics::Fluid::FluidSimulation::getInstace().getPosition(CurrentParticle)));
-			//shader.setMat4("model", trans);
-			//plane2.bindVAO();
-			//plane2.renderMesh(0);
-			//plane2.unBindVAO();
 
 			//BOUND
 			glm::vec3 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();

@@ -91,7 +91,7 @@ namespace Physics
 					positions[i].z = halfSize.z * glm::sign(positions[i].z);
 					velocity[i].z *= -1 * dampFactor;
 				}
-				OutPositions[i] = glm::vec4(positions[i], 0.1f);
+				OutPositions[i] = glm::vec4(positions[i], 0.34f);
 				/*positions[i] = modelMatrix * glm::vec4(positions[i], 1.0f);
 				velocity[i] = modelMatrix * glm::vec4(velocity[i], 0.0f);*/
 
@@ -538,30 +538,115 @@ namespace Physics
 		{
 			int i = 0;
 
-			for (int y = 0; y < particlesPerAxis; y++)
+
+			float bestGridColumAmount = 0;
+			float bestGridRowAmount = 0;
+			float bestGridDepthAmount = 0;
+			/*while (true)
 			{
-				for (int x = 0; x < particlesPerAxis; x++)
+				float totalWidth = numParticles <= particlesPerAxis ? 0 : particlesPerAxis;
+
+				float totalHeight = ceil((float)numParticles / (float)particlesPerAxis);
+
+				float width = totalWidth * gap;
+				float heigth = totalHeight * gap;
+				float Depth = width;
+
+				if (width <= BoundScale.x && heigth <= BoundScale.y && Depth <= BoundScale.z)
 				{
-					for (int z = 0; z < particlesPerAxis; z++)
+					bestGridColumAmount = totalWidth;
+					bestGridRowAmount = totalHeight;
+					bestGridDepthAmount = totalWidth;
+					break;
+				}
+				particlesPerAxis++;
+			}*/
+
+			float TotalOffsetFromCenterWidth = bestGridColumAmount == 0 ? particlesPerAxis * gap : bestGridColumAmount * gap;
+			float TotalOffsetFromCenterHeight = particlesPerAxis * gap;
+			float TotalOffsetFromCenterDepth = TotalOffsetFromCenterWidth;
+
+			for (int localY = 0; localY < particlesPerAxis; localY++)
+			{
+				for (int localX = 0; localX < particlesPerAxis; localX++)
+				{
+					for (int localZ = 0; localZ < particlesPerAxis; localZ++)
 					{
 						if (i >= numParticles)
 						{
 							return;
 						}
-						float tx = x / (particlesPerAxis - 1.0f);
-						float ty = y / (particlesPerAxis - 1.0f);
-						float tz = z / (particlesPerAxis - 1.0f);
 
-						float px = (tx - 0.5f) * gap + centre.x;
-						float py = (ty - 0.5f) * gap + centre.y;
-						float pz = (tz - 0.5f) * gap + centre.z;
-						positions[i] = { px * 10.0f, py * 10.0f, pz * 10.0f };
+						float XOffset = localX * gap;
+						float YOffset = localY * gap;
+						float ZOffset = localZ * gap;
+
+						float worldOffsetX = (0 - ((TotalOffsetFromCenterWidth - gap) / 2.0f));
+						float worldOffsetY = (0 + (TotalOffsetFromCenterWidth - gap) / 2.0f);
+						float worldOffsetZ = (0 - (TotalOffsetFromCenterWidth - gap) / 2.0f);
+
+						float x = (worldOffsetX + XOffset);
+						float y = (worldOffsetY - YOffset);
+						float z = (worldOffsetZ + ZOffset);
+
+						positions[i] = { x,y, z };
+						predictedPositions[i] = { x,y, z };
+						OutPositions[i] = { x,y,z, 0.34f };
+						/*positions[i] = { px * 10.0f, py * 10.0f, pz * 10.0f };
 						predictedPositions[i] = { px * 10.0f, py * 10.0f, pz * 10.0f };
-						OutPositions[i] = { px * 10.0f, py * 10.0f, pz * 10.0f, 0.1f };
+						OutPositions[i] = { px * 10.0f, py * 10.0f, pz * 10.0f, 0.34f };*/
 						i++;
 					}
 				}
 			}
+
+			/*float bestGridColumAmount = 0;
+			float bestGridRowAmount = 0;
+			float bestGridDepthAmount = 0;
+			while (true)
+			{
+				float totalWidth = numParticles <= particlesPerAxis ? 0 : particlesPerAxis;
+
+				float totalHeight = ceil((float)numParticles / (float)particlesPerAxis);
+
+				float width = totalWidth * gap;
+				float heigth = totalHeight * gap;
+				float Depth = width;
+
+				if (width <= BoundScale.x && heigth <= BoundScale.y && Depth <= BoundScale.z)
+				{
+					bestGridColumAmount = totalWidth;
+					bestGridRowAmount = totalHeight;
+					bestGridDepthAmount = totalWidth;
+					break;
+				}
+				particlesPerAxis++;
+			}
+
+			float TotalOffsetFromCenterWidth = bestGridColumAmount == 0 ? particlesPerAxis * gap : bestGridColumAmount * gap;
+			float TotalOffsetFromCenterHeight = bestGridRowAmount * gap;
+			float TotalOffsetFromCenterDepth = TotalOffsetFromCenterWidth;
+
+			for (int i = 0; i < numParticles; i++)
+			{
+				int localX = i % particlesPerAxis;
+				int localY = i / particlesPerAxis;
+				int localZ = i / (particlesPerAxis * particlesPerAxis);
+
+				float XOffset = localX * gap;
+				float YOffset = localY * gap;
+				float ZOffset = localZ * gap;
+
+				float worldOffsetX = (0 - ((TotalOffsetFromCenterWidth - gap) / 2.0f));
+				float worldOffsetY = (0 + (TotalOffsetFromCenterHeight - gap) / 2.0f);
+				float worldOffsetZ = (0 + (TotalOffsetFromCenterDepth - gap) / 2.0f);
+				float x = (worldOffsetX + XOffset);
+				float y = (worldOffsetY - YOffset);
+				float z = (worldOffsetZ - ZOffset);
+				positions[i] = { x,y, z };
+				predictedPositions[i] = { x,y, z };
+				OutPositions[i] = { x,y,z, 0.34f };
+			}*/
 		}
 		void FluidSimulation::RandomArrangement(int gap)
 		{
