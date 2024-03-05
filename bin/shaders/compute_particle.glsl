@@ -152,7 +152,7 @@ layout(std430, binding = 5) buffer BlockSpatialIndices
 
 layout(std430, binding = 6) buffer BlockSpatialOffsets
 {
-    int SpatialOffsets[];
+    uint SpatialOffsets[];
 };
 
 
@@ -195,6 +195,59 @@ void ResolveCollisions(uint particleIndex)
     }
 
 }
+
+// NOTE: GPU SORT
+
+uniform uint groupWidth;
+uniform uint groupHeight;
+uniform uint StepIndex;
+
+layout(local_size_x = NumThreads, local_size_y = 1, local_size_z = 1) in;
+void Sort()
+{
+    uint id = gl_GlobalInvocationID.x;
+    
+    uint i = id;
+
+    uint hIndex = i & (groupWidth - 1);
+    uint indexLeft = hIndex + (groupHeight + 1) * (i / groupWidth);
+    uint rightStepSize = StepIndex == 0 ? groupHeight - 2 * hIndex : (groupHeight + 1) / 2;
+    uint indexRight = indexLeft + rightStepSize;
+
+    if(indexRight >= NumParticles) return;
+
+    uint valueLeft = uint(SpatialIndices[indexLeft].z);
+    uint valueRight = uint(SpatialIndices[indexRight].z);
+
+    if(valueLeft > valueRight)
+    {
+        vec4 temp = SpatialIndices[indexLeft];
+        SpatialIndices[indexLeft] = SpatialIndices[indexRight];
+        SpatialIndices[indexRight] = temp;
+    }
+}
+
+layout(local_size_x = NumThreads, local_size_y = 1, local_size_z = 1) in;
+void calculateOffsets()
+{
+    uint id = gl_GlobalInvocationID.x;
+    if (id >= NumParticles) return;
+    // IndexBuffer = SpatialIndicies
+    // OffsetsBuffer = SpatialOffsets
+
+    uint i = id;
+    uint null = NumParticles;
+
+    uint key = uint(SpatialIndices[i].z);
+    uint keyPrev = i == 0 ? null : uint(SpatialIndices[i-1].z);
+    if(key != keyPrev)
+    {
+        SpatialOffsets[key] = uint(i);
+    }
+
+}
+
+// NOTE: END OF GPU SORT
 
 layout(local_size_x = NumThreads, local_size_y = 1, local_size_z = 1) in;
 void ExternalForces()
@@ -388,11 +441,28 @@ void UpdatePosition()
 //layout (local_size_x = NumThreads, local_size_y = 1, local_size_z = 1) in;
 void main() 
 {
+    //TODO: TEST THIS
 
     // Dispatch Kernerls
     ExternalForces();
     SpatialHashUpdate();
     //NOTE: GPU SORT HERE.
+    //FIXME: MAKE THIS WORK!
+    int numStages = (int)Log(NextPowerOfTwo(indexBuffer.count), 2);
+    for(int stageIndex = 0; stageIndex < numStages; stageIndex++)
+    {
+        for(int stepIndex  = 0; stepIndex  < stageIndex + 1; stepIndex++)
+        {
+            groupWidth = 1 << (stageIndex - stepIndex);
+            groupHeight = 2 * groupWidth -1;
+            StepIndex = stepIndex;
+
+            sort();
+
+        }
+    }
+    calculateOffsets();
+
     CalculateDensities();
     CalculatePressureForce();
     CalculateViscosity();
