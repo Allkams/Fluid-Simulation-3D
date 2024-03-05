@@ -124,7 +124,7 @@ namespace Physics
 				densities.push_back({ 0,0 });
 			}
 
-			int RowSize = powf(particleAmmount, (1.0f / 3.0f));
+			int RowSize = ceil(powf(particleAmmount, (1.0f / 3.0f)));
 			//int RowSize = ceil(glm::sqrt(particleAmmount));
 			float gap = 0.215f;
 			switch (type)
@@ -334,8 +334,8 @@ namespace Physics
 
 		glm::vec2 FluidSimulation::CalculateDensity(const glm::vec3& pos)
 		{
-			glm::vec3 originCell = PositionToCellCoord(pos);
-			float sqrRadius = interactionRadius * interactionRadius;
+			const glm::vec3& originCell = PositionToCellCoord(pos);
+			//float sqrRadius = interactionRadius * interactionRadius;
 			float density = 0;
 			float NearDensity = 0;
 
@@ -347,20 +347,20 @@ namespace Physics
 
 				while (currIndex < numParticles)
 				{
-					SpatialStruct index = spatialLookup[currIndex];
+					const glm::vec3& index = spatialLookup[currIndex];
 					currIndex++;
-					if (index.key != key) break;
+					if (index.z != key) break;
 
 
-					if (index.hash != hash) continue;
+					if (index.y != hash) continue;
 
-					if (index.index >= numParticles) break;
+					if (index.x >= numParticles) break;
 
 
-					uint32_t neighborIndex = index.index;
+					uint32_t neighborIndex = index.x;
 
-					glm::vec3 neighbourPos = predictedPositions[neighborIndex];
-					glm::vec3 offsetToNeighbour = neighbourPos - pos;
+					const glm::vec3& neighbourPos = predictedPositions[neighborIndex];
+					const glm::vec3& offsetToNeighbour = neighbourPos - pos;
 					float sqrDist = dot(offsetToNeighbour, offsetToNeighbour);
 
 					if (sqrDist > sqrRadius) continue;
@@ -386,15 +386,15 @@ namespace Physics
 
 		void FluidSimulation::CalculatePressureForce(uint32 particleIndex, float deltatime)
 		{
-			float density = densities[particleIndex].x;
-			float nearDensity = densities[particleIndex].y;
-			float pressure = ConvertDensityToPressure(density);
-			float nearPressure = ConvertNearDensityToPressure(nearDensity);
+			const float density = densities[particleIndex].x;
+			const float nearDensity = densities[particleIndex].y;
+			const float pressure = ConvertDensityToPressure(density);
+			const float nearPressure = ConvertNearDensityToPressure(nearDensity);
 			glm::vec3 pressureForce = { 0,0, 0 };
 
-			glm::vec3 pos = predictedPositions[particleIndex];
-			glm::vec3 originCell = PositionToCellCoord(pos);
-			float sqrRadius = interactionRadius * interactionRadius;
+			const glm::vec3& pos = predictedPositions[particleIndex];
+			const glm::vec3& originCell = PositionToCellCoord(pos);
+			//float sqrRadius = interactionRadius * interactionRadius;
 
 			for (int i = 0; i < 27; i++)
 			{
@@ -404,18 +404,18 @@ namespace Physics
 
 				while (currIndex < numParticles)
 				{
-					SpatialStruct index = spatialLookup[currIndex];
+					const glm::vec3& index = spatialLookup[currIndex];
 					currIndex++;
-					if (index.key != key) break;
+					if (index.z != key) break;
 
 
-					if (index.hash != hash) continue;
+					if (index.y != hash) continue;
 
-					uint32_t neighborIndex = index.index;
+					uint32_t neighborIndex = index.x;
 					if (neighborIndex == particleIndex) continue;
 
 					glm::vec3 neighbourPos = predictedPositions[neighborIndex];
-					glm::vec3 offsetToNeighbour = (neighbourPos)-(pos);
+					glm::vec3 offsetToNeighbour = neighbourPos-pos;
 					float sqrDist = dot(offsetToNeighbour, offsetToNeighbour);
 
 					if (sqrDist > sqrRadius) continue;
@@ -443,12 +443,12 @@ namespace Physics
 
 		void FluidSimulation::CalculateViscosityForce(uint32 particleIndex, float deltatime)
 		{
-			glm::vec3 pos = predictedPositions[particleIndex];
-			glm::vec3 originCell = PositionToCellCoord(pos);
-			float sqrRadius = interactionRadius * interactionRadius;
+			const glm::vec3& pos = predictedPositions[particleIndex];
+			const glm::vec3& originCell = PositionToCellCoord(pos);
+			//float sqrRadius = interactionRadius * interactionRadius;
 
 			glm::vec3 viscosityForce = { 0,0,0 };
-			glm::vec3 velo = velocity[particleIndex];
+			const glm::vec3& velo = velocity[particleIndex];
 
 			for (int i = 0; i < 27; i++)
 			{
@@ -458,17 +458,17 @@ namespace Physics
 
 				while (currIndex < numParticles)
 				{
-					SpatialStruct index = spatialLookup[currIndex];
+					const glm::vec3& index = spatialLookup[currIndex];
 					currIndex++;
-					if (index.key != key) break;
+					if (index.z != key) break;
 
 
-					if (index.hash != hash) continue;
+					if (index.y != hash) continue;
 
-					uint32_t neighborIndex = index.index;
+					uint32_t neighborIndex = index.x;
 					if (neighborIndex == particleIndex) continue;
 
-					glm::vec3 neighbourPos = predictedPositions[neighborIndex];
+					const glm::vec3& neighbourPos = predictedPositions[neighborIndex];
 					glm::vec3 offsetToNeighbour = neighbourPos - pos;
 					float sqrDist = dot(offsetToNeighbour, offsetToNeighbour);
 
@@ -496,7 +496,7 @@ namespace Physics
 				glm::vec3 cellPos = PositionToCellCoord(predictedPositions[i]);
 				uint32_t hash = HashCell(cellPos.x, cellPos.y, cellPos.z);
 				uint32_t cellKey = GetKeyFromHash(hash, numParticles);
-				spatialLookup[i] = { cellKey, hash, i };
+				spatialLookup[i] = { i, hash, cellKey };
 				startIndices[i] = INT_MAX;
 			});
 
@@ -506,8 +506,8 @@ namespace Physics
 				[this](uint32_t i)
 			{
 				if (i >= numParticles) return;
-				uint32_t key = spatialLookup[i].key;
-				uint32_t keyPrev = i == 0 ? UINT32_MAX : spatialLookup[i - 1].key;
+				uint32_t key = spatialLookup[i].z;
+				uint32_t keyPrev = i == 0 ? UINT32_MAX : spatialLookup[i - 1].z;
 				if (key != keyPrev)
 				{
 					startIndices[key] = i;

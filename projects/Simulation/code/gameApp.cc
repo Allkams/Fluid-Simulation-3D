@@ -88,6 +88,7 @@ namespace Game
 
 	bool GameApp::Run()
 	{
+		//NOTE: DOES NOT WORK AS INTENDED ON < 45 fps as computation takes to much time and gap for force and viscosity becomes uncontrollably high.
 
 		/*TODO LIST
 		*  - Implement a GPU Sort somehow...

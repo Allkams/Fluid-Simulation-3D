@@ -85,6 +85,7 @@ namespace Physics
 
 			void UpdateSpatialLookup();
 
+			const float sqrRadius = 0.35f * 0.35f;
 			float interactionRadius = 0.35f;
 			float TargetDensity = 99.9f;
 			float pressureMultiplier = 300.0f;
@@ -112,7 +113,7 @@ namespace Physics
 			uint32_t HashCell(int X, int Y, int Z);
 			uint32_t GetKeyFromHash(const uint32_t hash, const uint32_t spatialLength);
 
-			std::vector<SpatialStruct> spatialLookup;
+			std::vector<glm::vec3> spatialLookup; // index, hash, key
 			std::vector<uint32_t> startIndices;
 
 			const glm::vec3 offsets[27] = { 
