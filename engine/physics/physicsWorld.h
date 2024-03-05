@@ -106,6 +106,7 @@ namespace Physics
 
 			std::vector<glm::vec3> predictedPositions;
 			std::vector<glm::vec3> velocity;
+			std::vector<glm::vec3> velocity2;
 
 			std::vector<glm::vec2> densities; // density, neardensity
 

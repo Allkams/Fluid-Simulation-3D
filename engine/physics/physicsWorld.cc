@@ -55,11 +55,23 @@ namespace Physics
 				CalculatePressureForce(i, deltatime);
 			});
 
+			//std::for_each(std::execution::par, pList.begin(), pList.end(),
+			//	[this, deltatime](uint32_t i)
+			//{
+			//	velocity2[i] = velocity[i];
+			//});
+
 			std::for_each(std::execution::par, pList.begin(), pList.end(),
 				[this, deltatime](uint32_t i)
 			{
 				CalculateViscosityForce(i, deltatime);
 			});
+
+			//std::for_each(std::execution::par, pList.begin(), pList.end(),
+			//	[this, deltatime](uint32_t i)
+			//{
+			//	velocity[i] = velocity2[i];
+			//});
 
 			std::for_each(std::execution::par, pList.begin(), pList.end(),
 				[this, deltatime](uint32_t i)
@@ -120,6 +132,7 @@ namespace Physics
 				positions.push_back({ 0,0,0 });
 				OutPositions.push_back({ 0,0,0, 0.25f });
 				velocity.push_back({ 0,0,0 });
+				velocity2.push_back({ 0,0,0 });
 				predictedPositions.push_back({ 0,0,0 });
 				densities.push_back({ 0,0 });
 			}

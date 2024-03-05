@@ -101,7 +101,7 @@ namespace Game
 		glm::vec2 winSize = window->getSize();
 		//PreWork
 		RenderUtils::Camera Cam(glm::vec3(0));
-		nrParticles = 10000;
+		nrParticles = 50000;
 		Physics::Fluid::FluidSimulation::getInstace().InitializeData(nrParticles);
 		std::vector<uint32_t> particles;
 		for (int i = 0; i < nrParticles; i++)
@@ -182,7 +182,22 @@ namespace Game
 		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), NULL, GL_DYNAMIC_DRAW);
 
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufSpatialOffsets);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(uint), NULL, GL_DYNAMIC_DRAW);
+
+		cParticleShader.use();
+		cParticleShader.setInt("NumParticles", nrParticles);
+
+		cParticleShader.setFloat("interactionRadius", Physics::Fluid::FluidSimulation::getInstace().getInteractionRadius());
+		cParticleShader.setFloat("targetDensity", Physics::Fluid::FluidSimulation::getInstace().getDensityTarget());
+		cParticleShader.setFloat("pressureMultiplier", Physics::Fluid::FluidSimulation::getInstace().getPressureMultiplier());
+		cParticleShader.setFloat("nearPressureMultiplier", Physics::Fluid::FluidSimulation::getInstace().getNearPressureMultiplier());
+		cParticleShader.setFloat("viscosityStrength", Physics::Fluid::FluidSimulation::getInstace().getViscosityStrength());
+		cParticleShader.setFloat("gravityScale", Physics::Fluid::FluidSimulation::getInstace().getGravityScale());
+
+		cParticleShader.setVec3("boundSize", Physics::Fluid::FluidSimulation::getInstace().getBounds());
+		cParticleShader.setVec3("centre", glm::vec3(0));
+		glUseProgram(0);
+		shader.Enable();
 
 		//Cam.Position = { 20, 0, 0 };
 		Cam.Position = { 10, 15, 10 };
@@ -336,9 +351,31 @@ namespace Game
 
 			shader.Disable();
 
-			particleShader.Enable();
+			//Compute shader does not work...
 
-			/*glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::vec3), &Physics::Fluid::FluidSimulation::getInstace().positions[0], GL_STATIC_DRAW);*/
+			/*if (isRunning)
+			{
+				cParticleShader.use();
+				cParticleShader.setFloat("TimeStep", deltatime);
+
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, bufPositions);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, bufColors);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, bufPredictedPos);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, bufVelocities);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, bufDensities);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, bufSpatialIndices);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, bufSpatialOffsets);
+
+				const int numWorkGroups[3] = {
+					nrParticles / 1024,
+					1,
+					1
+				};
+
+				glDispatchCompute(numWorkGroups[0], numWorkGroups[1], numWorkGroups[2]);
+			}*/
+
+			particleShader.Enable();
 
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPositions);
 			glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &Physics::Fluid::FluidSimulation::getInstace().OutPositions[0], GL_DYNAMIC_DRAW);

@@ -1,6 +1,6 @@
 #version 430
 
-#define NumThreads 64
+#define NumThreads 128
 #define M_PI 3.1415926535897932384626433832795
 //Includes
 // #include "shaders/spatialHash.glsl"
@@ -198,9 +198,9 @@ void ResolveCollisions(uint particleIndex)
 
 // NOTE: GPU SORT
 
-uniform uint groupWidth;
-uniform uint groupHeight;
-uniform uint StepIndex;
+uint groupWidth;
+uint groupHeight;
+uint StepIndex;
 
 layout(local_size_x = NumThreads, local_size_y = 1, local_size_z = 1) in;
 void Sort()
@@ -438,6 +438,14 @@ void UpdatePosition()
     ResolveCollisions(id);
 }
 
+int nextPowerOfTwo(uint n) {
+    uint power = 1;
+    while (power < n) {
+        power <<= 1;
+    }
+    return int(power);
+}
+
 //layout (local_size_x = NumThreads, local_size_y = 1, local_size_z = 1) in;
 void main() 
 {
@@ -446,9 +454,7 @@ void main()
     // Dispatch Kernerls
     ExternalForces();
     SpatialHashUpdate();
-    //NOTE: GPU SORT HERE.
-    //FIXME: MAKE THIS WORK!
-    int numStages = (int)Log(NextPowerOfTwo(indexBuffer.count), 2);
+    int numStages = int(log2(nextPowerOfTwo(NumParticles)));
     for(int stageIndex = 0; stageIndex < numStages; stageIndex++)
     {
         for(int stepIndex  = 0; stepIndex  < stageIndex + 1; stepIndex++)
@@ -457,7 +463,7 @@ void main()
             groupHeight = 2 * groupWidth -1;
             StepIndex = stepIndex;
 
-            sort();
+            Sort();
 
         }
     }
