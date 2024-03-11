@@ -54,4 +54,7 @@ public:
 private:
 	void LoadShader(const char* vsPath, const char* fsPath);
 
+	void checkCompileErrors(GLuint shader, std::string type);
+	
+
 };

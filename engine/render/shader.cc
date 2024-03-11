@@ -67,39 +67,43 @@ void Shader::LoadShader(const char* vsPath, const char* fsPath)
 	glShaderSource(vsID, 1, &vShaderCode, NULL);
 	glCompileShader(vsID);
 
-	glGetShaderiv(vsID, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(vsID, 512, NULL, info);
-		printf("[ Shader ] : ERROR : Compilation failure for vertex shader. \n Error log: %s\n", info);
-		assert(false);
-	}
+	/*glGetShaderiv(vsID, GL_COMPILE_STATUS, &success);*/
+	//if (!success)
+	//{
+	//	glGetShaderInfoLog(vsID, 512, NULL, info);
+	//	printf("[ Shader ] : ERROR : Compilation failure for vertex shader. \n Error log: %s\n", info);
+	//	assert(false);
+	//}
+	checkCompileErrors(vsID, "Vertex Shader");
 
 	fsID = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fsID, 1, &fShaderCode, NULL);
 	glCompileShader(fsID);
 
-	glGetShaderiv(fsID, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(fsID, 512, NULL, info);
-		printf("[ Shader ] : ERROR : Compilation failure for fragment shader. \n Error log: %s\n", info);
-		assert(false);
-	}
+	//glGetShaderiv(fsID, GL_COMPILE_STATUS, &success);
+	//if (!success)
+	//{
+	//	glGetShaderInfoLog(fsID, 512, NULL, info);
+	//	printf("[ Shader ] : ERROR : Compilation failure for fragment shader. \n Error log: %s\n", info);
+	//	assert(false);
+	//}
+	checkCompileErrors(fsID, "Fragment Shader");
 
 	this->ID = glCreateProgram();
 	glAttachShader(ID, vsID);
 	glAttachShader(ID, fsID);
 	glLinkProgram(ID);
 
-	glGetProgramiv(ID, GL_LINK_STATUS, &success);
+	/*glGetProgramiv(ID, GL_LINK_STATUS, &success);
 	if (!success)
 	{
 		glGetProgramInfoLog(ID, 512, NULL, info);
 		printf("[ Shader ] : ERROR : Linking failure for shader program. \n Error log: %s\n", info);
 		assert(false);
-	}
+	}*/
 	
+	checkCompileErrors(ID, "PROGRAM");
+
 	glDeleteShader(vsID);
 	glDeleteShader(fsID);
 }
@@ -164,4 +168,30 @@ void Shader::setVec4(const std::string& name, glm::vec4 value) const
 void Shader::setMat4(const std::string& name, glm::mat4 value) const
 {
 	glUniformMatrix4fv(glGetUniformLocation(this->ID, name.c_str()), 1, GL_FALSE, &value[0][0]);
+}
+
+void Shader::checkCompileErrors(GLuint shader, std::string type)
+{
+	GLint success;
+	GLchar infoLog[1024];
+	if (type != "PROGRAM")
+	{
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+		if (!success)
+		{
+			glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+			std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
+			assert(success);
+		}
+	}
+	else
+	{
+		glGetProgramiv(shader, GL_LINK_STATUS, &success);
+		if (!success)
+		{
+			glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+			std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: Shader " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
+			assert(success);
+		}
+	}
 }
