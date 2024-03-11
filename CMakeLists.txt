@@ -1,4 +1,4 @@
-project(spectrawise)
+project(FluidSim)
 cmake_minimum_required(VERSION 3.2)
 
 MACRO(TARGET_PCH target path)

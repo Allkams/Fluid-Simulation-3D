@@ -49,28 +49,11 @@ namespace Game
 	{
 		this->window = new DISPLAY::Window;
 
-		//window->SetKeyPressFunction([this](int32 key, int32 scancode, int32 action, int32 mods)
-		//{
-		//	if (key == GLFW_KEY_ESCAPE) {
-		//		this->window->Close();
-		//	}
-
-		//	this->inputManager.HandleKeyPressEvent(key, scancode, action, mods);
-		//});
-
-		//window->SetMousePressFunction([this](int32 key, int32 action, int32 mods) {
-		//	this->inputManager.HandleMousePressEvent(key, action, mods);
-		//});
-
-		//window->SetMouseMoveFunction([this](float64 x, float64 y) {
-		//	this->inputManager.mouse.px = x;
-		//	this->inputManager.mouse.py = y;
-		//});
-
 		/*this->window*/
 		if (window->Open())
 		{
-			this->window->setSize(1900, 1060);
+			//this->window->setSize(1900, 1060);
+			this->window->setSize(2304, 1296);
 			this->window->setTitle("Fluid Sim");
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
@@ -94,8 +77,6 @@ namespace Game
 		*  - Implement a GPU Sort somehow...
 		*  - Make the 3D Bound rotatable when pressing shift
 		*  - Make camera movement when pressing ctrl
-		*  - 
-		*
 		*/
 
 		glm::vec2 winSize = window->getSize();
@@ -112,8 +93,6 @@ namespace Game
 
 		Shader shader = Shader("./shaders/VertexShader.vs", "./shaders/FragementShader.fs");
 		Shader particleShader = Shader("./shaders/particleRender.vs", "./shaders/particleRender.fs");
-		//Render::ComputeShader cSpatial = Render::ComputeShader("./shaders/spatialHash.glsl");
-		//Render::ComputeShader cMath = Render::ComputeShader("./shaders/FluidMath.glsl");
 		Render::ComputeShader cParticleShader = Render::ComputeShader("./shaders/compute_particle.glsl");
 		
 		shader.Enable();
@@ -279,55 +258,6 @@ namespace Game
 				// RUN UPDATE
 				Physics::PhysicsWorld::getInstace().update(deltatime);
 
-				// MOUSE POSITION:
-				//float64 x;
-				//float64 y;
-				//this->window->GetMousePos(x,y);
-				//float xNDC = (2.0f * x) / winSize.x - 1.0f;
-				//float yNDC = 1.0f - (2.0f * y) / winSize.y;
-
-				//glm::vec4 rayClip(xNDC, yNDC, -1.0f, 1.0f);
-
-				//glm::vec4 rayEye = Cam.GetInvProjection() * rayClip;
-				//rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
-				//glm::vec4 rayWorld = Cam.GetInvViewMatrix() * rayEye;
-				//// --------------------------------------------------------------------------------------------
-				//// Needed?
-				//// --------------------------------------------------------------------------------------------
-				//glm::vec3 rayDirection = glm::normalize(glm::vec3(rayWorld));
-				//
-				//glm::vec3 dir = glm::vec3(0, 0, -1);
-
-				//glm::vec3 P = dir * 6.0f;
-
-				//float t = glm::dot(P - Cam.Position, dir) / glm::dot(rayDirection, dir);
-
-				//glm::vec3 hitPos = Cam.Position + t * rayDirection;
-				//// --------------------------------------------------------------------------------------------
-				////Update mouse world position
-				//Physics::Fluid::FluidSimulation::getInstace().setMousePosition({ hitPos.x, hitPos.y });
-				//
-				//// Listen to Mouse press to give input strength
-				//this->window->SetMousePressFunction([this](int32 button, int32 press, int32 sc)
-				//{
-				//	if (button == GLFW_MOUSE_BUTTON_1 && press)
-				//	{
-				//		printf("Mouse one pressed\n");
-				//		Physics::Fluid::FluidSimulation::getInstace().setInputStrength(400);
-				//	}
-				//	else if (button == GLFW_MOUSE_BUTTON_2 && press)
-				//	{
-				//		printf("Mouse two pressed\n");
-				//		Physics::Fluid::FluidSimulation::getInstace().setInputStrength(-300);
-				//	}
-				//	else
-				//	{
-				//		printf("Mouse buttons released\n");
-				//		Physics::Fluid::FluidSimulation::getInstace().setInputStrength(0);
-				//	}
-				//});
-
-
 			}
 			auto simEnd = std::chrono::steady_clock::now();
 			double simElapsed = std::chrono::duration<double>(simEnd - simStart).count() * 1000.0f;
@@ -397,8 +327,6 @@ namespace Game
 			particleShader.setMat4("BillBoardViewProj", billboardViewProjection);
 			GLuint particleOffsetLoc = glGetUniformLocation(particleShader.GetProgram(), "ParticleOffset");
 
-			//for (int i = 0 ; i < nrParticles; i++)
-			//{ // DRAW
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, bufPositions);
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, bufColors);
 
@@ -416,8 +344,6 @@ namespace Game
 				particleOffset += drawVertCount / 6;
 
 			}
-			//}
-
 
 			particleShader.Disable();
 
@@ -431,14 +357,14 @@ namespace Game
 			shader.setVec4("color", glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 			trans = glm::translate(glm::vec3(0.0f,0.0f, 0.0f)) * glm::scale(bound);
 			shader.setMat4("model", trans);
-			plane3.bindVAO();
+			//Make a real bound instead of just a wireframe.
 			glPolygonMode(GL_FRONT, GL_LINE);
 			glPolygonMode(GL_BACK, GL_LINE);
+			plane3.bindVAO();
 			plane3.renderMesh(0);
-			
+			plane3.unBindVAO();
 			glPolygonMode(GL_FRONT, GL_FILL);
 			glPolygonMode(GL_BACK, GL_FILL);
-			plane3.unBindVAO();
 
 			Cam.setViewProjection();
 			auto renderEnd = std::chrono::steady_clock::now();
@@ -449,9 +375,15 @@ namespace Game
 			auto timeEnd = std::chrono::steady_clock::now();
 			deltatime = std::min(0.0333333, std::chrono::duration<double>(timeEnd - timeStart).count());
 		}
+
 		glDeleteBuffers(1, &bufPositions);
-		//glDeleteBuffers(1, &bufVelocities);
 		glDeleteBuffers(1, &bufColors);
+		glDeleteBuffers(1, &bufPredictedPos);
+		glDeleteBuffers(1, &bufVelocities);
+		glDeleteBuffers(1, &bufDensities);
+		glDeleteBuffers(1, &bufSpatialIndices);
+		glDeleteBuffers(1, &bufSpatialOffsets);
+
 		return true;
 	}
 
@@ -567,8 +499,8 @@ namespace Game
 			}
 
 			glm::vec3 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();
-			int b[3] = {bound.x, bound.y, bound.z};
-			if (ImGui::SliderInt3("Bounding Volume", b, 0.0f, 22.0f))
+			float b[3] = {bound.x, bound.y, bound.z};
+			if (ImGui::SliderFloat3("Bounding Volume", b, 0.0f, 30.0f))
 			{
 				Physics::Fluid::FluidSimulation::getInstace().setBound({b[0], b[1], b[2]});
 			}
