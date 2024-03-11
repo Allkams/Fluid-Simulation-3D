@@ -60,12 +60,12 @@ namespace Render
 
 	}
 
-	void Mesh::renderMesh(GLuint primitiveIndex)
+	void Mesh::renderMesh(GLuint primitiveIndex, GLenum RenderType)
 	{
 		if (primitiveIndex <= primitives.size()) {
 
 			//Drawes each primitive
-			glDrawElements(GL_TRIANGLES, 1 + primitives[primitiveIndex].numVertices - primitives[primitiveIndex].startIndex, GL_UNSIGNED_INT, (void*)(primitives[primitiveIndex].startIndex * sizeof(GLint)));
+			glDrawElements(RenderType, 1 + primitives[primitiveIndex].numVertices - primitives[primitiveIndex].startIndex, GL_UNSIGNED_INT, (void*)(primitives[primitiveIndex].startIndex * sizeof(GLint)));
 		}
 	}
 

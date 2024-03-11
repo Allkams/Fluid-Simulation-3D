@@ -26,7 +26,9 @@ namespace RenderUtils
 		FORWARD,
 		BACKWARD,
 		LEFT,
-		RIGHT
+		RIGHT,
+		DOWN,
+		UP
 	};
 
 	class Camera
@@ -38,19 +40,20 @@ namespace RenderUtils
 		glm::vec3 RightVector;
 		glm::vec3 WorldUpVector;
 		glm::vec3 Target;
+		bool shouldTarget = false;
 
 
 		float Yaw;
 		float Pitch;
 
-		float MovementSpeed;
+		float MovementSpeed = 5.0f;
 		float MouseSensitivity;
 		float FOV = 45.0f;
 
 		Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = -90.0f, float pitch = 0.0f);
 		Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
 
-		void setViewMatrix();
+		void setViewMatrix(bool FocusTarget = false);
 		glm::mat4 GetViewMatrix();
 		glm::mat4 GetInvViewMatrix();
 		void setProjection(float width, float height, float near, float far);

@@ -8,12 +8,12 @@
 
 namespace Render
 {
-	class computeShader
+	class ComputeShader
 	{
 	public:
 		unsigned int ID;
 
-		computeShader(const char* computePath);
+        ComputeShader(const char* computePath);
 
         void use()
         {

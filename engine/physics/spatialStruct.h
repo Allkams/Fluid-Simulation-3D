@@ -11,8 +11,8 @@ namespace Physics
 		SpatialStruct(uint32_t inKey, uint32_t inHash, uint32_t inIndex) : key(inKey), index(inIndex), hash(inHash) {};
 	};
 
-	inline bool compareByKey(const SpatialStruct& a, const SpatialStruct& b)
+	inline bool compareByKey(const glm::vec3 & a, const glm::vec3& b)
 	{
-		return a.key < b.key;
+		return a.z < b.z;
 	}
 }
