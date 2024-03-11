@@ -5,9 +5,6 @@ My 2D implementation version can be found here: [Fluid-Simulation-2D](https://gi
 > [!NOTE]
 > The simulation is utilizing Multithreading and GPU Billboard rendering.
 
-> [!CAUTION]
-> Hello!
-
 ## Table of Content
 - [Requirements](#requirements)
 - [Instructions](#instructions)
