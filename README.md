@@ -3,9 +3,9 @@ This is a repository for my 3D version of a SPH Langarian fluid simulation using
 My 2D implementation version can be found here: [Fluid-Simulation-2D](https://github.com/Allkams/Fluid-Simulation-2D)
 
 ## Table of Content
-- [Requirements](#table-of-content)
-- [Personal Usage Info](#personal-usage-info)
-    - [Instructions](#instructions)
+- [Requirements](#requirements)
+- [Instructions](#instructions)
+- [TODO List](#todo-list)
 - [Bug Reporting](#bug-reporting)
     - [Known Issues](#known-issues)
 - [Examples](#examples)
@@ -18,17 +18,23 @@ My 2D implementation version can be found here: [Fluid-Simulation-2D](https://gi
 - Cmake 3.2+
 - Compiler that runs C++20
 
-## Personal Usage Info
-If you want to use this engine to build a game or just play around, your free to do!
+## Instructions
+Download the repo to you computer. Generate the build file with CMake and just go crazy!
+All of the Fluid simulation files is in the Engine->Physics folder.
 
-### Instructions
-To make a game or a rendering project you need to add your code in a folder inside of [projects](/projects). This new folder must include its own CMakeList.txt file, which will generate the project and solution. Execute CMake from the root directory, and subsequently open the solution in your intended destination folder.
-
-## Bug Reporting
-Should you encounter any bugs within the engine, please create an issue to report it!
+## TODO List
+- [ ] Cleanup code!
+- [ ] Make Compute shader work
+- [ ] Make 3D bound better looking
+- [ ] Apply stickyness to the particles to mimic water better.
+- [ ] Implement a simple Rigidbody to particle collision system
 
 ### Known Issues
- - [] None
+ - [ ] Viscosity infinity energy loop. (Making infivity swirls in corners)
+ - [ ] Compute shader implementation not working.
+
+## Resarch Papers and referenses  
+ - 
 
 ## Examples
 Right now no Examples are provided as this is an early stage of development!
