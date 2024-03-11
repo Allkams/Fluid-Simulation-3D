@@ -32,12 +32,15 @@ All of the Fluid simulation files is in the Engine->Physics folder.
 - [ ] Make 3D bound better looking
 - [ ] Apply stickyness to the particles to mimic water better.
 - [ ] Implement a simple Rigidbody to particle collision system
+- [ ] Experiment with Spheretrace rendering for water.
+- [ ] Implement simple lights
+- [ ] Make water reflective.
 
 ## Bug Reporting  
 Would you encounter any bugs within the simulation, please create an issue and report it!  
 
 ### Known Issues
- - [ ] Viscosity infinity energy loop. (Making infivity swirls in corners)
+ - [ ] Viscosity infinity energy loop. (Making infinity swirls in corners)
  - [ ] Compute shader implementation not working.
 
 ## Resarch Papers and referenses  
