@@ -140,6 +140,7 @@ namespace Physics
 			int RowSize = ceil(powf(particleAmmount, (1.0f / 3.0f)));
 			//int RowSize = ceil(glm::sqrt(particleAmmount));
 			float gap = 0.215f;
+
 			switch (type)
 			{
 			case Physics::Fluid::GRID:

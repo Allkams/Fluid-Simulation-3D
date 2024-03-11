@@ -39,4 +39,5 @@ void main()
     gl_Position = ViewProj * translation + projectVertexPos;
     Color = ReadColors[index1D];
     posAndScale = vec4(translation.xyz, scale);
+
 }
