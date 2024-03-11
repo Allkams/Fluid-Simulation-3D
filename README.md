@@ -40,7 +40,7 @@ All of the Fluid simulation files is in the Engine->Physics folder.
 Would you encounter any bugs within the simulation, please create an issue and report it!  
 
 ### Known Issues
- - [ ] Viscosity infinity energy loop. (Making infivity swirls in corners)
+ - [ ] Viscosity infinity energy loop. (Making infinity swirls in corners)
  - [ ] Compute shader implementation not working.
 
 ## Resarch Papers and referenses  
