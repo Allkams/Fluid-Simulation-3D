@@ -49,7 +49,6 @@ namespace Game
 	{
 		this->window = new DISPLAY::Window;
 
-		/*this->window*/
 		if (window->Open())
 		{
 			//this->window->setSize(1900, 1060);
@@ -74,17 +73,17 @@ namespace Game
 		//NOTE: DOES NOT WORK AS INTENDED ON < 45 fps as computation takes to much time and gap for force and viscosity becomes uncontrollably high.
 
 		/*TODO LIST
+		*  - Add comments to code!
 		*  - Implement a GPU Sort somehow...
 		*  - Make the 3D Bound rotatable when pressing shift
 		*  - Make camera movement when pressing ctrl
 		*/
 
 		glm::vec2 winSize = window->getSize();
-		//PreWork
 		RenderUtils::Camera Cam(glm::vec3(0));
     
-		nrParticles = 50000;
-		Physics::Fluid::FluidSimulation::getInstace().InitializeData(nrParticles);
+		nrParticles = 25000;
+		Physics::Fluid::FluidSimulation::getInstance().InitializeData(nrParticles);
 		std::vector<uint32_t> particles;
 		for (int i = 0; i < nrParticles; i++)
 		{
@@ -127,10 +126,10 @@ namespace Game
 		std::vector<glm::mat4> transforms;
 		transforms.resize(nrParticles);
 
-		GLuint bufPositions/*[2]*/;
-		GLuint bufColors/*[2]*/;
+		GLuint bufPositions;
+		GLuint bufColors;
 		GLuint bufPredictedPos;
-		GLuint bufVelocities/*[2]*/;
+		GLuint bufVelocities;
 		GLuint bufDensities;
 		GLuint bufSpatialIndices;
 		GLuint bufSpatialOffsets;
@@ -144,7 +143,7 @@ namespace Game
 		glGenBuffers(1, &bufSpatialOffsets);
 
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPositions);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &Physics::Fluid::FluidSimulation::getInstace().OutPositions[0], GL_DYNAMIC_DRAW);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &Physics::Fluid::FluidSimulation::getInstance().OutPositions[0], GL_DYNAMIC_DRAW);
 
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufColors);
 		glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &colors[0], GL_DYNAMIC_DRAW);
@@ -167,14 +166,14 @@ namespace Game
 		cParticleShader.use();
 		cParticleShader.setInt("NumParticles", nrParticles);
 
-		cParticleShader.setFloat("interactionRadius", Physics::Fluid::FluidSimulation::getInstace().getInteractionRadius());
-		cParticleShader.setFloat("targetDensity", Physics::Fluid::FluidSimulation::getInstace().getDensityTarget());
-		cParticleShader.setFloat("pressureMultiplier", Physics::Fluid::FluidSimulation::getInstace().getPressureMultiplier());
-		cParticleShader.setFloat("nearPressureMultiplier", Physics::Fluid::FluidSimulation::getInstace().getNearPressureMultiplier());
-		cParticleShader.setFloat("viscosityStrength", Physics::Fluid::FluidSimulation::getInstace().getViscosityStrength());
-		cParticleShader.setFloat("gravityScale", Physics::Fluid::FluidSimulation::getInstace().getGravityScale());
+		cParticleShader.setFloat("interactionRadius", Physics::Fluid::FluidSimulation::getInstance().getInteractionRadius());
+		cParticleShader.setFloat("targetDensity", Physics::Fluid::FluidSimulation::getInstance().getDensityTarget());
+		cParticleShader.setFloat("pressureMultiplier", Physics::Fluid::FluidSimulation::getInstance().getPressureMultiplier());
+		cParticleShader.setFloat("nearPressureMultiplier", Physics::Fluid::FluidSimulation::getInstance().getNearPressureMultiplier());
+		cParticleShader.setFloat("viscosityStrength", Physics::Fluid::FluidSimulation::getInstance().getViscosityStrength());
+		cParticleShader.setFloat("gravityScale", Physics::Fluid::FluidSimulation::getInstance().getGravityScale());
 
-		cParticleShader.setVec3("boundSize", Physics::Fluid::FluidSimulation::getInstace().getBounds());
+		cParticleShader.setVec3("boundSize", Physics::Fluid::FluidSimulation::getInstance().getBounds());
 		cParticleShader.setVec3("centre", glm::vec3(0));
 		glUseProgram(0);
 		shader.Enable();
@@ -256,12 +255,12 @@ namespace Game
 			if (isRunning)
 			{
 				// RUN UPDATE
-				Physics::PhysicsWorld::getInstace().update(deltatime);
+				Physics::Fluid::FluidSimulation::getInstance().Update(deltatime);
 
 			}
 			auto simEnd = std::chrono::steady_clock::now();
 			double simElapsed = std::chrono::duration<double>(simEnd - simStart).count() * 1000.0f;
-			Physics::Fluid::FluidSimulation::getInstace().setSimulationTime((float)simElapsed);
+			Physics::Fluid::FluidSimulation::getInstance().setSimulationTime((float)simElapsed);
 
 			auto colorUpdateStart = std::chrono::steady_clock::now();
 			// --------------------------------------------------------------------------------------------
@@ -271,7 +270,7 @@ namespace Game
 				[this, blue, red, &colors, &transforms](uint32_t i)
 				{
 				if (colors.size() > nrParticles || i >= nrParticles) return;
-					float normalized = Physics::Fluid::FluidSimulation::getInstace().getSpeedNormalzied(i);
+					float normalized = Physics::Fluid::FluidSimulation::getInstance().getSpeedNormalzied(i);
 					colors[i] = (1.0f - normalized) * blue + normalized * red;
 				});
 			// --------------------------------------------------------------------------------------------
@@ -309,7 +308,7 @@ namespace Game
 			particleShader.Enable();
 
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPositions);
-			glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &Physics::Fluid::FluidSimulation::getInstace().OutPositions[0], GL_DYNAMIC_DRAW);
+			glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &Physics::Fluid::FluidSimulation::getInstance().OutPositions[0], GL_DYNAMIC_DRAW);
 
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufColors);
 			glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &colors[0], GL_DYNAMIC_DRAW);
@@ -353,7 +352,7 @@ namespace Game
 			shader.setMat4("project", Cam.GetProjection());
 
 			//BOUND
-			glm::vec3 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();
+			glm::vec3 bound = Physics::Fluid::FluidSimulation::getInstance().getBounds();
 			shader.setVec4("color", glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 			trans = glm::translate(glm::vec3(0.0f,0.0f, 0.0f)) * glm::scale(bound);
 			shader.setMat4("model", trans);
@@ -404,7 +403,7 @@ namespace Game
 			ImGui::Text("Particles: %i", nrParticles);
 			ImGui::NewLine();
 			ImGui::Text("Simulation status: %s", isRunning ? "ON" : "OFF");
-			float simTime = Physics::Fluid::FluidSimulation::getInstace().getSimulationTime();
+			float simTime = Physics::Fluid::FluidSimulation::getInstance().getSimulationTime();
 			ImGui::Text("Simulation Elapsed: %.2f ms", simTime);
 			ImGui::Text("Rendering Elapsed:  %.2f ms", renderingElapsed);
 			ImGui::Text("Color Elapsed:      %.2f ms", colorElapsed);
@@ -423,18 +422,18 @@ namespace Game
 				}
 				CurrentParticle = targetSphere;
 			}
-			glm::vec3 pos = Physics::Fluid::FluidSimulation::getInstace().getPosition(CurrentParticle);
-			glm::vec3 vel = Physics::Fluid::FluidSimulation::getInstace().getVelocity(CurrentParticle);
+			glm::vec3 pos = Physics::Fluid::FluidSimulation::getInstance().getPosition(CurrentParticle);
+			glm::vec3 vel = Physics::Fluid::FluidSimulation::getInstance().getVelocity(CurrentParticle);
 			ImGui::Text("  Position: (%f, %f, %f)", pos.x, pos.y, pos.z);
 			ImGui::Text("  Velocity: (%f, %f, %f)", vel.x, vel.y, vel.z);
-			ImGui::Text("  Density: (%f)", Physics::Fluid::FluidSimulation::getInstace().getDensity(CurrentParticle));
-			ImGui::Text("  Near Density: (%f)", Physics::Fluid::FluidSimulation::getInstace().getNearDensity(CurrentParticle));
+			ImGui::Text("  Density: (%f)", Physics::Fluid::FluidSimulation::getInstance().getDensity(CurrentParticle));
+			ImGui::Text("  Near Density: (%f)", Physics::Fluid::FluidSimulation::getInstance().getNearDensity(CurrentParticle));
 
 			ImGui::NewLine();
-			bool gravity = Physics::Fluid::FluidSimulation::getInstace().getGravityStatus();
+			bool gravity = Physics::Fluid::FluidSimulation::getInstance().getGravityStatus();
 			if (ImGui::Checkbox("Gravity", &gravity))
 			{
-				Physics::Fluid::FluidSimulation::getInstace().setGravity(gravity);
+				Physics::Fluid::FluidSimulation::getInstance().setGravity(gravity);
 			}
 
 			ImGui::End();
@@ -453,56 +452,56 @@ namespace Game
 				if (ImGui::Button("Reset", { 100,25 }))
 				{
 					deltatime = 0.0166667f;
-					Physics::Fluid::FluidSimulation::getInstace().InitializeData(nrParticles);
+					Physics::Fluid::FluidSimulation::getInstance().InitializeData(nrParticles);
 				}
 
 				if (ImGui::InputInt("Particles", &nrParticles)) 
 				{
-					Physics::Fluid::FluidSimulation::getInstace().InitializeData(nrParticles);
+					Physics::Fluid::FluidSimulation::getInstance().InitializeData(nrParticles);
 				}
 			}
 
-			float interactionRadius = Physics::Fluid::FluidSimulation::getInstace().getInteractionRadius();
+			float interactionRadius = Physics::Fluid::FluidSimulation::getInstance().getInteractionRadius();
 			if (ImGui::SliderFloat("Interaction Radius", &interactionRadius, 0.01f, 10.0f))
 			{
-				Physics::Fluid::FluidSimulation::getInstace().setInteractionRadius(interactionRadius);
+				Physics::Fluid::FluidSimulation::getInstance().setInteractionRadius(interactionRadius);
 			}
 
-			float TargetDensity = Physics::Fluid::FluidSimulation::getInstace().getDensityTarget();
+			float TargetDensity = Physics::Fluid::FluidSimulation::getInstance().getDensityTarget();
 			if (ImGui::SliderFloat("Target Density", &TargetDensity, 0.0f, 100.0f))
 			{
-				Physics::Fluid::FluidSimulation::getInstace().setDensityTarget(TargetDensity);
+				Physics::Fluid::FluidSimulation::getInstance().setDensityTarget(TargetDensity);
 			}
 
-			float pressureMulti = Physics::Fluid::FluidSimulation::getInstace().getPressureMultiplier();
+			float pressureMulti = Physics::Fluid::FluidSimulation::getInstance().getPressureMultiplier();
 			if (ImGui::SliderFloat("Pressure Multiplier", &pressureMulti, 0.0f, 500.0f))
 			{
-				Physics::Fluid::FluidSimulation::getInstace().setPressureMultiplier(pressureMulti);
+				Physics::Fluid::FluidSimulation::getInstance().setPressureMultiplier(pressureMulti);
 			}
 
-			float nearPressureMulti = Physics::Fluid::FluidSimulation::getInstace().getNearPressureMultiplier();
+			float nearPressureMulti = Physics::Fluid::FluidSimulation::getInstance().getNearPressureMultiplier();
 			if (ImGui::SliderFloat("Pressure Near Multiplier", &nearPressureMulti, 0.0f, 100.0f))
 			{
-				Physics::Fluid::FluidSimulation::getInstace().setNearPressureMultiplier(nearPressureMulti);
+				Physics::Fluid::FluidSimulation::getInstance().setNearPressureMultiplier(nearPressureMulti);
 			}
 
-			float viscosityStrength = Physics::Fluid::FluidSimulation::getInstace().getViscosityStrength();
+			float viscosityStrength = Physics::Fluid::FluidSimulation::getInstance().getViscosityStrength();
 			if (ImGui::SliderFloat("Viscosity Strength", &viscosityStrength, 0.0f, 1.0f))
 			{
-				Physics::Fluid::FluidSimulation::getInstace().setViscosityStrength(viscosityStrength);
+				Physics::Fluid::FluidSimulation::getInstance().setViscosityStrength(viscosityStrength);
 			}
 
-			float gravityScale = Physics::Fluid::FluidSimulation::getInstace().getGravityScale();
+			float gravityScale = Physics::Fluid::FluidSimulation::getInstance().getGravityScale();
 			if (ImGui::SliderFloat("Gravity Scale", &gravityScale, 0.0f, 10.0f))
 			{
-				Physics::Fluid::FluidSimulation::getInstace().setGravityScale(gravityScale);
+				Physics::Fluid::FluidSimulation::getInstance().setGravityScale(gravityScale);
 			}
 
-			glm::vec3 bound = Physics::Fluid::FluidSimulation::getInstace().getBounds();
+			glm::vec3 bound = Physics::Fluid::FluidSimulation::getInstance().getBounds();
 			float b[3] = {bound.x, bound.y, bound.z};
 			if (ImGui::SliderFloat3("Bounding Volume", b, 0.0f, 30.0f))
 			{
-				Physics::Fluid::FluidSimulation::getInstace().setBound({b[0], b[1], b[2]});
+				Physics::Fluid::FluidSimulation::getInstance().setBound({b[0], b[1], b[2]});
 			}
 
 			ImGui::End();

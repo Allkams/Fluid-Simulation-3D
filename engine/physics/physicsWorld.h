@@ -1,32 +1,22 @@
 #pragma once
 
-#include <vector>
-#include "spatialStruct.h"
+#include <vector>s
 
 namespace Physics
 {
 	
 	namespace Fluid
 	{
-		enum Arrangements
-		{
-			GRID,
-			RANDOM,
-			CIRCLE,
-			size
-		};
 
-
-		//Break this out to another file.
 		class FluidSimulation
 		{
 		public:
 
-			static FluidSimulation& getInstace();
+			static FluidSimulation& getInstance();
 
 			void Update(float deltatime);
 
-			void InitializeData(int particleAmmount, glm::vec3 Centre = { 0,0 ,0}, Arrangements type = Arrangements::GRID);
+			void InitializeData(int particleAmmount, glm::vec3 Centre = { 0,0 ,0});
 
 			glm::vec3 getPosition(uint32 particleIndex);
 			glm::vec3 getVelocity(uint32 particleIndex);
@@ -59,12 +49,6 @@ namespace Physics
 			void setGravityScale(float value);
 			float getGravityScale();
 
-			/*void setMousePosition(glm::vec3 pos);
-			glm::vec3 getMousePosition();
-
-			void setInputStrength(float value);
-			float getInputStrength();*/
-
 			void setBound(const glm::vec3& value);
 			glm::vec3 getBounds();
 
@@ -96,10 +80,6 @@ namespace Physics
 
 			bool gravity = false;
 			float gravityScale = 10.0f;
-
-			/*glm::vec3 InteractionMousePoint = {0,0, 0};
-			float InteractionInputStrength = 0.0f;
-			float InteractionInputRadius = 0.99f;*/
 
 			uint32 numParticles;
 			std::vector<uint32> pList;
@@ -136,8 +116,6 @@ namespace Physics
 			glm::quat boundRotation = glm::identity<glm::quat>();
 
 			void GridArrangement(int particlesPerAxel, float gap, const glm::vec3& centre = glm::vec3(0, 0, 0));
-			void RandomArrangement(int gap);
-			void CircleArrangement();
 
 		private:
 			FluidSimulation() {};
@@ -146,19 +124,8 @@ namespace Physics
 		};
 	}
 
-	class PhysicsWorld
+	inline bool compareByKey(const glm::vec3& a, const glm::vec3& b)
 	{
-	public:
-
-		static PhysicsWorld& getInstace();
-
-		void update(float deltatime);
-
-	private:
-		PhysicsWorld() {};
-		~PhysicsWorld() {};
-		PhysicsWorld(const PhysicsWorld& cpy) = delete;
-	};
-
-
+		return a.z < b.z;
+	}
 }

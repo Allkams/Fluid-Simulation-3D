@@ -66,42 +66,17 @@ void Shader::LoadShader(const char* vsPath, const char* fsPath)
 	vsID = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vsID, 1, &vShaderCode, NULL);
 	glCompileShader(vsID);
-
-	/*glGetShaderiv(vsID, GL_COMPILE_STATUS, &success);*/
-	//if (!success)
-	//{
-	//	glGetShaderInfoLog(vsID, 512, NULL, info);
-	//	printf("[ Shader ] : ERROR : Compilation failure for vertex shader. \n Error log: %s\n", info);
-	//	assert(false);
-	//}
 	checkCompileErrors(vsID, "Vertex Shader");
 
 	fsID = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fsID, 1, &fShaderCode, NULL);
 	glCompileShader(fsID);
-
-	//glGetShaderiv(fsID, GL_COMPILE_STATUS, &success);
-	//if (!success)
-	//{
-	//	glGetShaderInfoLog(fsID, 512, NULL, info);
-	//	printf("[ Shader ] : ERROR : Compilation failure for fragment shader. \n Error log: %s\n", info);
-	//	assert(false);
-	//}
 	checkCompileErrors(fsID, "Fragment Shader");
 
 	this->ID = glCreateProgram();
 	glAttachShader(ID, vsID);
 	glAttachShader(ID, fsID);
 	glLinkProgram(ID);
-
-	/*glGetProgramiv(ID, GL_LINK_STATUS, &success);
-	if (!success)
-	{
-		glGetProgramInfoLog(ID, 512, NULL, info);
-		printf("[ Shader ] : ERROR : Linking failure for shader program. \n Error log: %s\n", info);
-		assert(false);
-	}*/
-	
 	checkCompileErrors(ID, "PROGRAM");
 
 	glDeleteShader(vsID);

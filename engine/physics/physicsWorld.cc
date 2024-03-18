@@ -10,24 +10,9 @@
 
 namespace Physics
 {
-	PhysicsWorld& PhysicsWorld::getInstace()
-	{
-		static PhysicsWorld instance;
-
-		return instance;
-	}
-
-	void PhysicsWorld::update(float deltatime)
-	{
-		Fluid::FluidSimulation::getInstace().Update(deltatime);
-	}
-}
-
-namespace Physics
-{
 	namespace Fluid
 	{
-		FluidSimulation& FluidSimulation::getInstace()
+		FluidSimulation& FluidSimulation::getInstance()
 		{
 			static FluidSimulation instance;
 
@@ -42,7 +27,6 @@ namespace Physics
 				velocity[i] += CalculateExternalFoce(positions[i], velocity[i]) * deltatime;
 
 				predictedPositions[i] = positions[i] + velocity[i] * (1.0f / 120.0f);
-				//WriteIndex = readIndex;
 			});
 
 			UpdateSpatialLookup();
@@ -55,34 +39,17 @@ namespace Physics
 				CalculatePressureForce(i, deltatime);
 			});
 
-			//std::for_each(std::execution::par, pList.begin(), pList.end(),
-			//	[this, deltatime](uint32_t i)
-			//{
-			//	velocity2[i] = velocity[i];
-			//});
-
 			std::for_each(std::execution::par, pList.begin(), pList.end(),
 				[this, deltatime](uint32_t i)
 			{
 				CalculateViscosityForce(i, deltatime);
 			});
 
-			//std::for_each(std::execution::par, pList.begin(), pList.end(),
-			//	[this, deltatime](uint32_t i)
-			//{
-			//	velocity[i] = velocity2[i];
-			//});
-
 			std::for_each(std::execution::par, pList.begin(), pList.end(),
 				[this, deltatime](uint32_t i)
 			{
 				positions[i] += velocity[i] * deltatime;
 				
-				/*glm::mat4 modelMatrix = glm::translate(positions[i]);
-
-				glm::vec3 localPosition = glm::inverse(modelMatrix) * glm::vec4(positions[i], 1.0f);
-				glm::vec3 localVelocity = glm::inverse(modelMatrix) * glm::vec4(velocity[i], 0.0f);*/
-
 				const float dampFactor = 0.95f;
 				const glm::vec3 halfSize = BoundScale * 0.5f;
 				glm::vec3 edgeDst = halfSize - abs(positions[i]);
@@ -104,12 +71,9 @@ namespace Physics
 					velocity[i].z *= -1 * dampFactor;
 				}
 				OutPositions[i] = glm::vec4(positions[i], 0.34f);
-				/*positions[i] = modelMatrix * glm::vec4(positions[i], 1.0f);
-				velocity[i] = modelMatrix * glm::vec4(velocity[i], 0.0f);*/
-
 			});
 		}
-		void FluidSimulation::InitializeData(int particleAmmount, glm::vec3 Centre, Arrangements type)
+		void FluidSimulation::InitializeData(int particleAmmount, glm::vec3 Centre)
 		{
 			numParticles = particleAmmount;
 
@@ -138,24 +102,10 @@ namespace Physics
 			}
 
 			int RowSize = ceil(powf(particleAmmount, (1.0f / 3.0f)));
-			//int RowSize = ceil(glm::sqrt(particleAmmount));
 			float gap = 0.215f;
 
-			switch (type)
-			{
-			case Physics::Fluid::GRID:
-				GridArrangement(RowSize, gap);
-				break;
-			case Physics::Fluid::RANDOM:
-				RandomArrangement(gap);
-				break;
-			case Physics::Fluid::CIRCLE:
-				break;
-			case Physics::Fluid::size:
-				break;
-			default:
-				break;
-			}
+			GridArrangement(RowSize, gap);
+
 			UpdateSpatialLookup();
 			updateDensities();
 
@@ -276,26 +226,6 @@ namespace Physics
 			return gravityScale;
 		}
 
-		//void FluidSimulation::setMousePosition(glm::vec3 pos)
-		//{
-		//	InteractionMousePoint = pos;
-		//}
-
-		//glm::vec3 FluidSimulation::getMousePosition()
-		//{
-		//	return InteractionMousePoint;
-		//}
-
-		//void FluidSimulation::setInputStrength(float value)
-		//{
-		//	InteractionInputStrength = value;
-		//}
-
-		//float FluidSimulation::getInputStrength()
-		//{
-		//	return InteractionInputStrength;
-		//}
-
 		void FluidSimulation::setBound(const glm::vec3& value)
 		{
 			BoundScale = value;
@@ -324,32 +254,12 @@ namespace Physics
 				gravityAccel = { 0, -gravityScale, 0 };
 			}
 
-			/*if (InteractionInputStrength != 0)
-			{
-				glm::vec3 PointOffset = InteractionMousePoint - pos;
-				float sqrDist = dot(PointOffset, PointOffset);
-				float sqrRadius = InteractionInputRadius * InteractionInputRadius;
-				if (sqrDist < sqrRadius)
-				{
-					float dst = sqrt(sqrDist);
-					float edgeT = (dst / InteractionInputRadius);
-					float centreT = 1 - edgeT;
-					glm::vec3 dirToCentre = PointOffset / dst;
-
-					float gravityWeight = 1 - (centreT * glm::clamp(InteractionInputStrength / 10, 0.0f, 1.0f));
-					glm::vec3 accel = gravityAccel * gravityWeight + dirToCentre * centreT * InteractionInputStrength;
-					accel -= vel * centreT;
-					return accel;
-				}
-			}*/
-
 			return gravityAccel;
 		}
 
 		glm::vec2 FluidSimulation::CalculateDensity(const glm::vec3& pos)
 		{
 			const glm::vec3& originCell = PositionToCellCoord(pos);
-			//float sqrRadius = interactionRadius * interactionRadius;
 			float density = 0;
 			float NearDensity = 0;
 
@@ -408,7 +318,6 @@ namespace Physics
 
 			const glm::vec3& pos = predictedPositions[particleIndex];
 			const glm::vec3& originCell = PositionToCellCoord(pos);
-			//float sqrRadius = interactionRadius * interactionRadius;
 
 			for (int i = 0; i < 27; i++)
 			{
@@ -459,7 +368,6 @@ namespace Physics
 		{
 			const glm::vec3& pos = predictedPositions[particleIndex];
 			const glm::vec3& originCell = PositionToCellCoord(pos);
-			//float sqrRadius = interactionRadius * interactionRadius;
 
 			glm::vec3 viscosityForce = { 0,0,0 };
 			const glm::vec3& velo = velocity[particleIndex];
@@ -552,31 +460,7 @@ namespace Physics
 		{
 			int i = 0;
 
-
-			float bestGridColumAmount = 0;
-			float bestGridRowAmount = 0;
-			float bestGridDepthAmount = 0;
-			/*while (true)
-			{
-				float totalWidth = numParticles <= particlesPerAxis ? 0 : particlesPerAxis;
-
-				float totalHeight = ceil((float)numParticles / (float)particlesPerAxis);
-
-				float width = totalWidth * gap;
-				float heigth = totalHeight * gap;
-				float Depth = width;
-
-				if (width <= BoundScale.x && heigth <= BoundScale.y && Depth <= BoundScale.z)
-				{
-					bestGridColumAmount = totalWidth;
-					bestGridRowAmount = totalHeight;
-					bestGridDepthAmount = totalWidth;
-					break;
-				}
-				particlesPerAxis++;
-			}*/
-
-			float TotalOffsetFromCenterWidth = bestGridColumAmount == 0 ? particlesPerAxis * gap : bestGridColumAmount * gap;
+			float TotalOffsetFromCenterWidth = particlesPerAxis * gap;
 			float TotalOffsetFromCenterHeight = particlesPerAxis * gap;
 			float TotalOffsetFromCenterDepth = TotalOffsetFromCenterWidth;
 
@@ -606,131 +490,11 @@ namespace Physics
 						positions[i] = { x,y, z };
 						predictedPositions[i] = { x,y, z };
 						OutPositions[i] = { x,y,z, 0.34f };
-						/*positions[i] = { px * 10.0f, py * 10.0f, pz * 10.0f };
-						predictedPositions[i] = { px * 10.0f, py * 10.0f, pz * 10.0f };
-						OutPositions[i] = { px * 10.0f, py * 10.0f, pz * 10.0f, 0.34f };*/
 						i++;
 					}
 				}
 			}
 
-			/*float bestGridColumAmount = 0;
-			float bestGridRowAmount = 0;
-			float bestGridDepthAmount = 0;
-			while (true)
-			{
-				float totalWidth = numParticles <= particlesPerAxis ? 0 : particlesPerAxis;
-
-				float totalHeight = ceil((float)numParticles / (float)particlesPerAxis);
-
-				float width = totalWidth * gap;
-				float heigth = totalHeight * gap;
-				float Depth = width;
-
-				if (width <= BoundScale.x && heigth <= BoundScale.y && Depth <= BoundScale.z)
-				{
-					bestGridColumAmount = totalWidth;
-					bestGridRowAmount = totalHeight;
-					bestGridDepthAmount = totalWidth;
-					break;
-				}
-				particlesPerAxis++;
-			}
-
-			float TotalOffsetFromCenterWidth = bestGridColumAmount == 0 ? particlesPerAxis * gap : bestGridColumAmount * gap;
-			float TotalOffsetFromCenterHeight = bestGridRowAmount * gap;
-			float TotalOffsetFromCenterDepth = TotalOffsetFromCenterWidth;
-
-			for (int i = 0; i < numParticles; i++)
-			{
-				int localX = i % particlesPerAxis;
-				int localY = i / particlesPerAxis;
-				int localZ = i / (particlesPerAxis * particlesPerAxis);
-
-				float XOffset = localX * gap;
-				float YOffset = localY * gap;
-				float ZOffset = localZ * gap;
-
-				float worldOffsetX = (0 - ((TotalOffsetFromCenterWidth - gap) / 2.0f));
-				float worldOffsetY = (0 + (TotalOffsetFromCenterHeight - gap) / 2.0f);
-				float worldOffsetZ = (0 + (TotalOffsetFromCenterDepth - gap) / 2.0f);
-				float x = (worldOffsetX + XOffset);
-				float y = (worldOffsetY - YOffset);
-				float z = (worldOffsetZ - ZOffset);
-				positions[i] = { x,y, z };
-				predictedPositions[i] = { x,y, z };
-				OutPositions[i] = { x,y,z, 0.34f };
-			}*/
-		}
-		void FluidSimulation::RandomArrangement(int gap)
-		{
-			printf("Service unavalaible!");
-			//	auto arrangeTimeStart = std::chrono::steady_clock::now();
-			//	int processed = 0;
-			//	float sqrRadius = interactionRadius * interactionRadius;
-			//	for (int i = 0; i < numParticles; i++)
-			//	{
-			//		if (processed == 0)
-			//		{
-			//			UpdateSpatialLookup();
-			//		}
-
-			//		if ((i % 10) == 10) UpdateSpatialLookup();
-
-			//		// -1 .. 0 .. 1
-			//		printf("Processing particle %i \n", i);
-			//		float randomValueX = Core::RandomFloatNTP();
-			//		float randomValueY = Core::RandomFloatNTP();
-
-			//		bool PositionFail = false;
-
-			//		float x = Bound.x * randomValueX;
-			//		float y = Bound.y * randomValueY;
-			//		glm::vec2 newPosition = { x,y };
-			//		glm::vec2 originCell = PositionToCellCoord(newPosition);
-			//		//printf("	New X %f \n", x);
-			//		//printf("	New Y %f \n", y);
-
-			//		for (int j = 0; j < 9; j++)
-			//		{
-			//			uint32_t hash = HashCell(originCell.x + offsets[j].x, originCell.y + offsets[j].y);
-			//			uint32_t key = GetKeyFromHash(hash, numParticles);
-			//			int currIndex = startIndices[key];
-
-			//			while (currIndex < numParticles)
-			//			{
-			//				SpatialStruct index = spatialLookup[currIndex];
-			//				currIndex++;
-			//				if (index.key != key) break;
-
-
-			//				if (index.hash != hash) continue;
-
-			//				uint32_t neighborIndex = index.index;
-			//				if (neighborIndex == i) continue;
-
-			//				glm::vec2 neighbourPos = predictedPositions[neighborIndex];
-			//				glm::vec2 offsetToNeighbour = neighbourPos - newPosition;
-			//				float sqrDist = dot(offsetToNeighbour, offsetToNeighbour);
-
-			//				if (sqrDist > sqrRadius) continue;
-
-			//				PositionFail = true;
-			//				break;
-			//			}
-			//		}
-
-			//		if (PositionFail) { i--; continue; }
-
-			//		positions[i] = newPosition;
-			//		predictedPositions[i] = newPosition;
-			//		processed++;
-			//	}
-
-			//	auto arrangeTimeEnd = std::chrono::steady_clock::now();
-			//	double ArrangeTimeElapsed = std::chrono::duration<double>(arrangeTimeEnd - arrangeTimeStart).count() * 1000.0f; // ms
-			//	printf("Time to arrange: %f ms\n", (float)ArrangeTimeElapsed);
-			//}
 		}
 	}
 }
