@@ -27,7 +27,7 @@ Download the repo to you computer. Generate the build file with CMake and just g
 All of the Fluid simulation files is in the Engine->Physics folder.
 
 ## TODO List
-- [ ] Cleanup code!
+- [X] Cleanup code!
 - [ ] Make Compute shader work
 - [ ] Make 3D bound better looking
 - [ ] Apply stickyness to the particles to mimic water better.
