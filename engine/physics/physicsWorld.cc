@@ -1,3 +1,20 @@
+// 
+// Copyright 2023 Alexander Marklund (Allkams02@gmail.com)
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this softwareand associated
+// documentation files(the “Software”), to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense, and /or sell copies of the Software,
+// and to permit persons to whom the Software is furnished to do so, subject to the following conditions :
+//
+// The above copyright noticeand this permission notice shall be included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+// IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN 
+// AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+
 #include "config.h"
 #include "physicsWorld.h"
 
@@ -21,6 +38,7 @@ namespace Physics
 
 		void FluidSimulation::Update(float deltatime)
 		{
+			auto GravityStart = std::chrono::steady_clock::now();
 			std::for_each(std::execution::par, pList.begin(), pList.end(),
 				[this, deltatime](uint32_t i)
 			{
@@ -28,23 +46,38 @@ namespace Physics
 
 				predictedPositions[i] = positions[i] + velocity[i] * (1.0f / 120.0f);
 			});
+			auto GravityEnd = std::chrono::steady_clock::now();
+			ElapsedTimeGravity = std::chrono::duration<double>(GravityEnd - GravityStart).count() * 1000.0f;
 
+			auto SpatialStart = std::chrono::steady_clock::now();
 			UpdateSpatialLookup();
+			auto SpatialEnd = std::chrono::steady_clock::now();
+			ElapsedTimeSpatial = std::chrono::duration<double>(SpatialEnd - SpatialStart).count() * 1000.0f;
 
+			auto DensityStart = std::chrono::steady_clock::now();
 			updateDensities();
+			auto DensityEnd = std::chrono::steady_clock::now();
+			ElapsedTimeDensity = std::chrono::duration<double>(DensityEnd - DensityStart).count() * 1000.0f;
 
+			auto PressureStart = std::chrono::steady_clock::now();
 			std::for_each(std::execution::par, pList.begin(), pList.end(),
 				[this, deltatime](uint32_t i)
 			{
 				CalculatePressureForce(i, deltatime);
 			});
+			auto PressureEnd = std::chrono::steady_clock::now();
+			ElapsedTimePressure = std::chrono::duration<double>(PressureEnd - PressureStart).count() * 1000.0f;
 
+			auto ViscosityStart = std::chrono::steady_clock::now();
 			std::for_each(std::execution::par, pList.begin(), pList.end(),
 				[this, deltatime](uint32_t i)
 			{
 				CalculateViscosityForce(i, deltatime);
 			});
+			auto ViscosityEnd = std::chrono::steady_clock::now();
+			ElapsedTimeViscosity = std::chrono::duration<double>(ViscosityEnd - ViscosityStart).count() * 1000.0f;
 
+			auto PosNCollStart = std::chrono::steady_clock::now();
 			std::for_each(std::execution::par, pList.begin(), pList.end(),
 				[this, deltatime](uint32_t i)
 			{
@@ -73,6 +106,8 @@ namespace Physics
 				}
 				OutPositions[i] = glm::vec4(positions[i], 0.34f);
 			});
+			auto PosNCollEnd = std::chrono::steady_clock::now();
+			ElapsedTimePositionNCollision = std::chrono::duration<double>(PosNCollEnd - PosNCollStart).count() * 1000.0f;
 		}
 		void FluidSimulation::InitializeData(int particleAmmount, glm::vec3 Centre)
 		{
@@ -145,6 +180,36 @@ namespace Physics
 		{
 			if (particleIndex >= numParticles) return 0.0f;
 			return glm::clamp(glm::length(velocity[particleIndex]), 0.0f, 1.5f) / 1.5f;
+		}
+
+		double FluidSimulation::getElapsedTimeGravity()
+		{
+			return ElapsedTimeGravity;
+		}
+
+		double FluidSimulation::getElapsedTimeSpatial()
+		{
+			return ElapsedTimeSpatial;
+		}
+
+		double FluidSimulation::getElapsedTimeDensity()
+		{
+			return ElapsedTimeDensity;
+		}
+
+		double FluidSimulation::getElapsedTimePressure()
+		{
+			return ElapsedTimePressure;
+		}
+
+		double FluidSimulation::getElapsedTimeViscosity()
+		{
+			return ElapsedTimeViscosity;
+		}
+
+		double FluidSimulation::getElapsedTimePosNColl()
+		{
+			return ElapsedTimePositionNCollision;
 		}
 
 		void FluidSimulation::setSimulationTime(float time)
@@ -267,7 +332,7 @@ namespace Physics
 			for (int i = 0; i < 27; i++)
 			{
 				// Fetch neighbor cells
-				uint32_t hash = HashCell(originCell.x + offsets[i].x, originCell.y + offsets[i].y, originCell.z + offsets[i].z);
+				uint32_t hash = HashCell(originCell + offsets[i]);
 				uint32_t key = GetKeyFromHash(hash, numParticles);
 				uint32 currIndex = startIndices[key];
 
@@ -301,22 +366,12 @@ namespace Physics
 			return { density, NearDensity };
 		}
 
-		float FluidSimulation::ConvertDensityToPressure(float density)
-		{
-			return (density - TargetDensity) * pressureMultiplier;
-		}
-
-		float FluidSimulation::ConvertNearDensityToPressure(float nearDensity)
-		{
-			return nearDensity * nearPressureMultiplier;
-		}
-
 		void FluidSimulation::CalculatePressureForce(uint32 particleIndex, float deltatime)
 		{
 			const float density = densities[particleIndex].x;
 			const float nearDensity = densities[particleIndex].y;
-			const float pressure = ConvertDensityToPressure(density);
-			const float nearPressure = ConvertNearDensityToPressure(nearDensity);
+			const float pressure = (density - TargetDensity) * pressureMultiplier;
+			const float nearPressure = nearDensity * nearPressureMultiplier;
 			glm::vec3 pressureForce = { 0,0, 0 };
 
 			const glm::vec3& pos = predictedPositions[particleIndex];
@@ -325,7 +380,7 @@ namespace Physics
 			for (int i = 0; i < 27; i++)
 			{
 				// Fetch neighbor cells
-				uint32_t hash = HashCell(originCell.x + offsets[i].x, originCell.y + offsets[i].y, originCell.z + offsets[i].z);
+				uint32_t hash = HashCell(originCell + offsets[i]);
 				uint32_t key = GetKeyFromHash(hash, numParticles);
 				int currIndex = startIndices[key];
 
@@ -351,8 +406,8 @@ namespace Physics
 
 					float neighborDensity = densities[neighborIndex].x;
 					float neighborNearDensity = densities[neighborIndex].y;
-					float neighborPressure = ConvertDensityToPressure(neighborDensity);
-					float neighborNearPressure = ConvertNearDensityToPressure(neighborNearDensity);
+					float neighborPressure = (neighborDensity - TargetDensity) * pressureMultiplier;
+					float neighborNearPressure = neighborNearDensity * nearPressureMultiplier;
 
 					float sharedPressure = (pressure + neighborPressure) * 0.5f;
 					float sharedNearPressure = (nearPressure + neighborNearPressure) * 0.5f;
@@ -365,8 +420,7 @@ namespace Physics
 				}
 			}
 
-			glm::vec3 acceleration = pressureForce / density;
-			velocity[particleIndex] += acceleration * deltatime;
+			velocity[particleIndex] += (pressureForce / density) * deltatime;
 		}
 
 		void FluidSimulation::CalculateViscosityForce(uint32 particleIndex, float deltatime)
@@ -380,7 +434,7 @@ namespace Physics
 			for (int i = 0; i < 27; i++)
 			{
 				// Fetch neighbor cells
-				uint32_t hash = HashCell(originCell.x + offsets[i].x, originCell.y + offsets[i].y, originCell.z + offsets[i].z);
+				uint32_t hash = HashCell(originCell + offsets[i]);
 				uint32_t key = GetKeyFromHash(hash, numParticles);
 				int currIndex = startIndices[key];
 
@@ -423,7 +477,7 @@ namespace Physics
 			{
 				if (i >= numParticles) return;
 				glm::vec3 cellPos = PositionToCellCoord(predictedPositions[i]);
-				uint32_t hash = HashCell(cellPos.x, cellPos.y, cellPos.z);
+				uint32_t hash = HashCell(cellPos);
 				uint32_t cellKey = GetKeyFromHash(hash, numParticles);
 				spatialLookup[i] = { i, hash, cellKey };
 				startIndices[i] = INT_MAX;
@@ -450,11 +504,11 @@ namespace Physics
 			return { (int)cell.x, (int)cell.y, (int)cell.z };
 		}
 
-		uint32_t FluidSimulation::HashCell(int X, int Y, int Z)
+		uint32_t FluidSimulation::HashCell(const glm::vec3& inCell)
 		{
-			uint32_t a = (uint32_t)X * 15823;
-			uint32_t b = (uint32_t)Y * 9737333;
-			uint32_t c = (uint32_t)Z * 440817757;
+			uint32_t a = (uint32_t)inCell.x * 15823;
+			uint32_t b = (uint32_t)inCell.y * 9737333;
+			uint32_t c = (uint32_t)inCell.z * 440817757;
 			return a + b + c;
 		}
 

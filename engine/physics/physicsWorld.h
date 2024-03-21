@@ -1,5 +1,22 @@
 #pragma once
 
+// 
+// Copyright 2023 Alexander Marklund (Allkams02@gmail.com)
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this softwareand associated
+// documentation files(the “Software”), to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense, and /or sell copies of the Software,
+// and to permit persons to whom the Software is furnished to do so, subject to the following conditions :
+//
+// The above copyright noticeand this permission notice shall be included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+// IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN 
+// AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+
 #include <vector>s
 
 namespace Physics
@@ -24,6 +41,13 @@ namespace Physics
 			float getNearDensity(uint32 particleIndex);
 			float getSpeed(uint32 particleIndex);
 			float getSpeedNormalzied(uint32 particleIndex);
+
+			double getElapsedTimeGravity();
+			double getElapsedTimeSpatial();
+			double getElapsedTimeDensity();
+			double getElapsedTimePressure();
+			double getElapsedTimeViscosity();
+			double getElapsedTimePosNColl();
 
 			void setSimulationTime(float time);
 			float getSimulationTime();
@@ -81,6 +105,13 @@ namespace Physics
 			bool gravity = false;
 			float gravityScale = 10.0f;
 
+			double ElapsedTimeGravity = 0.0;
+			double ElapsedTimeSpatial = 0.0;
+			double ElapsedTimeDensity = 0.0;
+			double ElapsedTimePressure = 0.0;
+			double ElapsedTimeViscosity = 0.0;
+			double ElapsedTimePositionNCollision = 0.0;
+
 			uint32 numParticles;
 			std::vector<uint32> pList;
 
@@ -91,7 +122,7 @@ namespace Physics
 			std::vector<glm::vec2> densities; // density, neardensity
 
 			glm::vec3 PositionToCellCoord(const glm::vec3& pos);
-			uint32_t HashCell(int X, int Y, int Z);
+			uint32_t HashCell(const glm::vec3& inCell);
 			uint32_t GetKeyFromHash(const uint32_t hash, const uint32_t spatialLength);
 
 			std::vector<glm::vec3> spatialLookup; // index, hash, key

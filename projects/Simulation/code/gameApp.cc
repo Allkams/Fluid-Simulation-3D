@@ -34,7 +34,7 @@
 #include "render/camera.h"
 #include "physics/physicsWorld.h"
 
-#define particleAmount 25000
+#define particleAmount 50000
 
 
 namespace Game
@@ -58,7 +58,7 @@ namespace Game
 		{
 			//this->window->setSize(1900, 1060);
 			this->window->setSize(2304, 1296);
-			this->window->setTitle("Fluid Sim");
+			this->window->setTitle("Fluid Simulation");
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 
@@ -426,15 +426,24 @@ namespace Game
 			int fps = 1.0f/ deltatime;
 			ImGui::Text("FPS: %i", fps);
 			ImGui::Text("Number of Particles: %s", formatNumberWithCommas((long long) nrParticles));
+			ImGui::Text("Simulation status: %s", isRunning ? "ON" : "OFF");
 			ImGui::NewLine();
-			if(ImGui::CollapsingHeader("SIMULATION DATA"))
+			if(ImGui::CollapsingHeader("PROGRAM DATA"))
 			{
-				ImGui::Text("Simulation status: %s", isRunning ? "ON" : "OFF");
 				float simTime = Physics::Fluid::FluidSimulation::getInstance().getSimulationTime();
 				ImGui::Text("Simulation Elapsed: %.2f ms", simTime);
 				ImGui::Text("Rendering Elapsed:  %.2f ms", renderingElapsed);
 				ImGui::Text("Color Elapsed:      %.2f ms", colorElapsed);
 				ImGui::Text("Program Elapsed:    %.2f ms", deltatime * 1000.0f);
+				if (ImGui::CollapsingHeader("SIMULATION DATA"))
+				{
+					ImGui::Text("  Gravity Elapsed:   %.2f ms", Physics::Fluid::FluidSimulation::getInstance().getElapsedTimeGravity());
+					ImGui::Text("  Spatial Elapsed:   %.2f ms", Physics::Fluid::FluidSimulation::getInstance().getElapsedTimeSpatial());
+					ImGui::Text("  Density Elapsed:   %.2f ms", Physics::Fluid::FluidSimulation::getInstance().getElapsedTimeDensity());
+					ImGui::Text("  Pressure Elapsed:  %.2f ms", Physics::Fluid::FluidSimulation::getInstance().getElapsedTimePressure());
+					ImGui::Text("  Viscosity Elapsed: %.2f ms", Physics::Fluid::FluidSimulation::getInstance().getElapsedTimeViscosity());
+					ImGui::Text("  PosNColl Elapsed:  %.2f ms", Physics::Fluid::FluidSimulation::getInstance().getElapsedTimePosNColl());
+				}
 			}
 			if (ImGui::CollapsingHeader("PARTICLE DATA"))
 			{
