@@ -9,7 +9,7 @@ This file contains all the valuable information about what you need to install a
 
 ## Installation guide
 The project is very simple to get started with. Most libraries and dependencies are already in the project files.
-But for a list on [Dependencies](#dependencies) and [external Libraries](#libraries), click the link on them or scroll down till you find the header.
+But for a list on [Dependencies](#dependencies) and [external Libraries](#libraries), click their link or scroll down till you find their section.
 
 ### Compilers and build systems
 To get started you need both Visual Studio and CMake 3.2 or newer. Make sure the Visual studio version can handle C++ 20.
