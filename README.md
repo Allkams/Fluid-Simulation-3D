@@ -25,6 +25,9 @@ My 2D implementation version can be found here: [Fluid-Simulation-2D](https://gi
 ## Instructions
 Download the repo to you computer. Generate the build file with CMake and just go crazy!
 All of the Fluid simulation files is in the Engine->Physics folder.
+> [!NOTE]
+> A more descriptive manual is [found here](https://github.com/Allkams/Fluid-Simulation-3D/blob/main/MANUAL.md)
+
 
 ## TODO List
 - [X] Cleanup code!
