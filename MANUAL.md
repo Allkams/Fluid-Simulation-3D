@@ -66,6 +66,12 @@ In this menu you can manage all depending values of the simulation. Here you tak
 - **Bounding Volume:** As this is not a open world simulation, this value desides the volume and area the simulation can be inside.
 - **Colors:** This collapsable header have 4 collapsable headers inside of it. Each color gives the value for a gradient. Color 1 0%, Color2 33%, Color3 66%, Color4 100%. This makes debugging easier!
 
+## The code
+>[!CAUTION]
+>As the code is still a work in progress and this project will be an ongoing side project for me, there will be a lot of timers and debug information available that might make the code unreadable.
+
+The code is mostly c++ and have been attempted to keep clean to make it as readable as possible. Most of the code is found in "../engine/physics/physicsWorld.cc" and "../engine/physics/physicsWorld.h".
+
 ## Dependencies
 - CMake 3.2
 - C++ 20
