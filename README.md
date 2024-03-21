@@ -38,6 +38,7 @@ All of the Fluid simulation files is in the Engine->Physics folder.
 - [ ] Experiment with Spheretrace rendering for water.
 - [ ] Implement simple lights
 - [ ] Make water reflective.
+- [X] Dynamic color gradient in water.
 
 ## Bug Reporting  
 Would you encounter any bugs within the simulation, please create an issue and report it!  
@@ -45,6 +46,7 @@ Would you encounter any bugs within the simulation, please create an issue and r
 ### Known Issues
  - [ ] Viscosity infinity energy loop. (Making infinity swirls in corners)
  - [ ] Compute shader implementation not working.
+ - [ ] Pressure going crazy when the fps is below 40.
 
 ## Resarch Papers and referenses  
  - [Particle-based Viscoelastic Fluid Simulation](http://www.ligum.umontreal.ca/Clavet-2005-PVFS/pvfs.pdf)
