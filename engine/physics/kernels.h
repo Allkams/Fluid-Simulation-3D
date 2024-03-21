@@ -4,6 +4,7 @@ namespace Physics
 {
 	namespace kernels
 	{
+		// Density Kernel
 		inline float SmoothingPow2(float dist, float radius)
 		{
 			if (dist < radius)
@@ -15,6 +16,7 @@ namespace Physics
 			return 0;
 		}
 
+		// Near Density Kernel
 		inline float SmoothingPow3(float dist, float radius)
 		{
 			if (dist < radius)
@@ -26,7 +28,7 @@ namespace Physics
 			return 0;
 		}
 
-
+		// Pressure Kernel
 		inline float SmoothingDerivativePow2(float dist, float radius)
 		{
 			if (dist <= radius)
@@ -38,6 +40,7 @@ namespace Physics
 			return 0;
 		}
 
+		// Near Pressure Kernel
 		inline float SmoothingDerivativePow3(float dist, float radius)
 		{
 			if (dist <= radius)
@@ -49,6 +52,7 @@ namespace Physics
 			return 0;
 		}
 
+		// Viscosity Kernel
 		inline float SmoothingViscoPoly6(float dist, float radius)
 		{
 			if (dist < radius)

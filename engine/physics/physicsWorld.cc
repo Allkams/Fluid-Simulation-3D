@@ -50,6 +50,7 @@ namespace Physics
 			{
 				positions[i] += velocity[i] * deltatime;
 				
+				// Edge collision check
 				const float dampFactor = 0.95f;
 				const glm::vec3 halfSize = BoundScale * 0.5f;
 				glm::vec3 edgeDst = halfSize - abs(positions[i]);
@@ -265,10 +266,12 @@ namespace Physics
 
 			for (int i = 0; i < 27; i++)
 			{
+				// Fetch neighbor cells
 				uint32_t hash = HashCell(originCell.x + offsets[i].x, originCell.y + offsets[i].y, originCell.z + offsets[i].z);
 				uint32_t key = GetKeyFromHash(hash, numParticles);
 				uint32 currIndex = startIndices[key];
 
+				// Loop over neigbor particles in neighbor cell
 				while (currIndex < numParticles)
 				{
 					const glm::vec3& index = spatialLookup[currIndex];
@@ -321,10 +324,12 @@ namespace Physics
 
 			for (int i = 0; i < 27; i++)
 			{
+				// Fetch neighbor cells
 				uint32_t hash = HashCell(originCell.x + offsets[i].x, originCell.y + offsets[i].y, originCell.z + offsets[i].z);
 				uint32_t key = GetKeyFromHash(hash, numParticles);
 				int currIndex = startIndices[key];
 
+				// Loop over neigbor particles in neighbor cell
 				while (currIndex < numParticles)
 				{
 					const glm::vec3& index = spatialLookup[currIndex];
@@ -374,10 +379,12 @@ namespace Physics
 
 			for (int i = 0; i < 27; i++)
 			{
+				// Fetch neighbor cells
 				uint32_t hash = HashCell(originCell.x + offsets[i].x, originCell.y + offsets[i].y, originCell.z + offsets[i].z);
 				uint32_t key = GetKeyFromHash(hash, numParticles);
 				int currIndex = startIndices[key];
 
+				// Loop over neigbor particles in neighbor cell
 				while (currIndex < numParticles)
 				{
 					const glm::vec3& index = spatialLookup[currIndex];

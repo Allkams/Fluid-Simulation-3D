@@ -46,6 +46,11 @@ namespace Game
 		int CurrentParticle = 0;
 		bool isRunning = false;
 
+		glm::vec4 Color1 = { 0.0f, 0.75f, 1.0f, 1.0f };
+		glm::vec4 Color2 = { 0.0f, 1.0f, 0.0f, 1.0f };
+		glm::vec4 Color3 = { 1.0f, 1.0f, 0.0f, 1.0f };
+		glm::vec4 Color4 = { 1.0f, 0.0f, 0.0f, 1.0f };
+
 		void RenderUI();
 
 		DISPLAY::Window* window;

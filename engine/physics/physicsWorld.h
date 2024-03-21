@@ -71,7 +71,7 @@ namespace Physics
 
 			const float sqrRadius = 0.35f * 0.35f;
 			float interactionRadius = 0.35f;
-			float TargetDensity = 99.9f;
+			float TargetDensity = 99.7f;
 			float pressureMultiplier = 300.0f;
 			float nearPressureMultiplier = 20.0f;
 			float viscosityStrength = 0.5f;
