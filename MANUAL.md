@@ -35,7 +35,7 @@ With these two installed we can start the installation process.
 5. In visual studio: Right click on the "simulation", and select "Select as startup project".
 6. Change the particle amount in "gameApp.cc" file, there you should find the line `#define particleAmount 50000`, change 50 000 to the desired amount.
 7. For better performace, change "Debug" to "Release" in the top section of visual studios UI.
-8. Press F5 or the button "Local Windows Debugger" to start the simulation
+8. Press F5 or the button "Local Windows Debugger" to start the project
 
 ## Project Usage
 When project installed and working its time to use the UI and make kaos with the simulation!
