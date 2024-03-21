@@ -37,6 +37,34 @@ With these two installed we can start the installation process.
 7. For better performace, change "Debug" to "Release" in the top section of visual studios UI.
 8. Press F5 or the button "Local Windows Debugger" to start the simulation
 
+## Project Usage
+When project installed and working its time to use the UI and make kaos with the simulation!
+
+### UI Menu: Debug INFO
+This menu give you all information you need to see the performace of the system.
+- **FPS:** Displays the current frames per seconds. This can not go lower than 2 fps.
+- **Number of Particles:** As the name states, this displays the selected amount of particles to simulate.
+- **SIMULATION DATA:** This collapsable header contains technical data that describes the performace of the system. Most parts of the code is encapsulated with a timer which this utilizes.
+    - **Simulation Status:** Shows if the simulation is running or not.
+    - **Simulation Elapsed:** The time the update function for the fluid/liquid simulation takes per frame.
+    - **Rendering Elapse:** The time it takes to render all particles. This is very low as this only counts the offloading to the gpu.
+    - **Color Elapsed:** How long does it take to change and update the color? Well, this displays that time.
+    - **Program Elapsed:** This is the deltasecond that the whole program takes to run. Taking 1/deltasecond will result in fps, 1/fps will result in deltasecond.
+- **PARTICLE DATA:** This is the second collapsable header and this contains information about specific particles. This includes a selection of a particle index and the shows the position, density, and velocity for that particle. No rendering have though been implemented to show this selected particle..
+
+### UI Menu: Values
+In this menu you can manage all depending values of the simulation. Here you take control over the simulation and it looks.
+- **START/STOP:** Here you can start, stop and reset the simulation.
+- **Gravity:** This boolean (true/false) value make it posible to toggle gravity on and off.
+- **Interaction Radius:** This is the surrounding sphere that desides the volume of interaction for the particles. This also changes the [smoothing kernels](https://github.com/Allkams/Fluid-Simulation-3D/blob/main/engine/physics/kernels.h) as they act from the interaction radius and distance between particles.
+- **Target Density:** This is the density the system/simulation will strive against.
+- **Pressure multiplier:** The multiplier that decides how much effect the pressure should have. The bigger the value, the more pressure applied.
+- **Near Pressure Multiplier:** Following the double density relaxsation principles from Smooth Particle Hydrodynamics we apply a near density and a near pressure to more drastic make sure we never overlap particles.
+- **Viscosity Strength:** This deside how thick the liquid should be, the closer to one, the more tension there is between particles, the lower value, the more spread the liquid will be.
+- **Gravity Scale:** Here we decide how much gravity should affect the particles. This alone could remove the gravity boolean.
+- **Bounding Volume:** As this is not a open world simulation, this value desides the volume and area the simulation can be inside.
+- **Colors:** This collapsable header have 4 collapsable headers inside of it. And the only purpose this have is to make the display more useful to give the possibility to see what happens while simulating.
+
 ## Dependencies
 Lorem ipsum
 
