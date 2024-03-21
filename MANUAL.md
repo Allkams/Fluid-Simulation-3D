@@ -44,12 +44,13 @@ When project installed and working its time to use the UI and make kaos with the
 This menu give you all information you need to see the performace of the system.
 - **FPS:** Displays the current frames per seconds. This can not go lower than 2 fps.
 - **Number of Particles:** As the name states, this displays the selected amount of particles to simulate.
-- **SIMULATION DATA:** This collapsable header contains technical data that describes the performace of the system. Most parts of the code is encapsulated with a timer which this utilizes.
+- **PROGRAM DATA:** This collapsable header contains technical data that describes the performace of the system. Most parts of the code is encapsulated with a timer which this utilizes.
     - **Simulation Status:** Shows if the simulation is running or not.
     - **Simulation Elapsed:** The time the update function for the fluid/liquid simulation takes per frame.
     - **Rendering Elapse:** The time it takes to render all particles. This is very low as this only counts the offloading to the gpu.
     - **Color Elapsed:** How long does it take to change and update the color? Well, this displays that time.
     - **Program Elapsed:** This is the deltasecond that the whole program takes to run. Taking 1/deltasecond will result in fps, 1/fps will result in deltasecond.
+    - **SIMULATION DATA:** This collapsable header contains technical data that describes the performace of each function in the simulation.
 - **PARTICLE DATA:** This is the second collapsable header and this contains information about specific particles. This includes a selection of a particle index and the shows the position, density, and velocity for that particle. No rendering have though been implemented to show this selected particle..
 
 ### UI Menu: Values
