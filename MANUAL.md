@@ -66,7 +66,14 @@ In this menu you can manage all depending values of the simulation. Here you tak
 - **Colors:** This collapsable header have 4 collapsable headers inside of it. And the only purpose this have is to make the display more useful to give the possibility to see what happens while simulating.
 
 ## Dependencies
-Lorem ipsum
+- CMake 3.2
+- C++ 20
+- OpenGL 4.6
 
 ## Libraries
-Lorem ipusm
+- GLFW
+- GLEW
+- Dear ImGUI
+- NanoVG
+- Soloud
+- GLM
