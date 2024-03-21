@@ -64,7 +64,7 @@ In this menu you can manage all depending values of the simulation. Here you tak
 - **Viscosity Strength:** This deside how thick the liquid should be, the closer to one, the more tension there is between particles, the lower value, the more spread the liquid will be.
 - **Gravity Scale:** Here we decide how much gravity should affect the particles. This alone could remove the gravity boolean.
 - **Bounding Volume:** As this is not a open world simulation, this value desides the volume and area the simulation can be inside.
-- **Colors:** This collapsable header have 4 collapsable headers inside of it. And the only purpose this have is to make the display more useful to give the possibility to see what happens while simulating.
+- **Colors:** This collapsable header have 4 collapsable headers inside of it. Each color gives the value for a gradient. Color 1 0%, Color2 33%, Color3 66%, Color4 100%. This makes debugging easier!
 
 ## Dependencies
 - CMake 3.2
