@@ -24,6 +24,9 @@
 #include <chrono>
 #include <thread>
 #include <execution>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
 
 #include "render/RenderBasic.h"
 #include "render/shader.h"
@@ -406,6 +409,14 @@ namespace Game
 		return true;
 	}
 
+	std::string formatNumberWithCommas(long long number) {
+		std::stringstream ss;
+		ss.imbue(std::locale("en_US.UTF-8"));
+		ss << std::fixed << number;
+		return ss.str();
+	}
+
+
 	void GameApp::RenderUI()
 	{
 		if (this->window->IsOpen())
@@ -414,7 +425,7 @@ namespace Game
 
 			int fps = 1.0f/ deltatime;
 			ImGui::Text("FPS: %i", fps);
-			ImGui::Text("Number of Particles: %i", nrParticles);
+			ImGui::Text("Number of Particles: %s", formatNumberWithCommas((long long) nrParticles));
 			ImGui::NewLine();
 			if(ImGui::CollapsingHeader("SIMULATION DATA"))
 			{
