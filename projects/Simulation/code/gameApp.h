@@ -45,6 +45,11 @@ namespace Game
 		int nrParticles;
 		int CurrentParticle = 0;
 		bool isRunning = false;
+		bool shouldReset = false;
+		float64 LastX;
+		float64 LastY;
+		float64 MPosX;
+		float64 MPosY;
 
 		glm::vec4 Color1 = { 0.0f, 0.75f, 1.0f, 1.0f };
 		glm::vec4 Color2 = { 0.0f, 1.0f, 0.0f, 1.0f };

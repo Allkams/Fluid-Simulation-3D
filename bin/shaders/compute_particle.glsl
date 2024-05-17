@@ -1,6 +1,6 @@
 #version 430
 
-#define NumThreads 128
+#define NumThreads 1024
 #define M_PI 3.1415926535897932384626433832795
 //Includes
 // #include "shaders/spatialHash.glsl"
@@ -103,7 +103,8 @@ const vec3 offsets3D[27] =
 // Convert floating point position into an integer cell coordinate
 vec3 GetCell3D(vec3 position, float radius)
 {
-	return floor(position / radius);
+	vec3 cell = floor(position / radius);
+    return vec3(int(cell.x), int(cell.y), int(cell.z));
 }
 
 // Hash cell coordinate to a single unsigned integer
@@ -169,6 +170,12 @@ uniform float gravityScale;
 
 uniform vec3 boundSize;
 uniform vec3 centre;
+uniform vec4 Color1;
+uniform vec4 Color2;
+uniform vec4 Color3;
+uniform vec4 Color4;
+
+
 
 void ResolveCollisions(uint particleIndex)
 {
@@ -228,21 +235,40 @@ void Sort()
 }
 
 layout(local_size_x = NumThreads, local_size_y = 1, local_size_z = 1) in;
+void bitonicSort() {
+    uint tid = gl_GlobalInvocationID.x;
+
+    for (uint k = 2; k <= NumParticles; k <<= 1) {
+        for (uint j = k >> 1; j > 0; j >>= 1) {
+            uint ixj = tid ^ j;
+
+            if (ixj > tid) {
+                bool ascending = ((tid & k) == 0);
+                vec4 d1 = SpatialIndices[tid];
+                vec4 d2 = SpatialIndices[ixj];
+
+                if ((d1.z > d2.z) == ascending) {
+                    SpatialIndices[tid] = d2;
+                    SpatialIndices[ixj] = d1;
+                }
+            }
+
+            barrier();
+        }
+    }
+}
+
+layout(local_size_x = NumThreads, local_size_y = 1, local_size_z = 1) in;
 void calculateOffsets()
 {
     uint id = gl_GlobalInvocationID.x;
     if (id >= NumParticles) return;
-    // IndexBuffer = SpatialIndicies
-    // OffsetsBuffer = SpatialOffsets
 
-    uint i = id;
-    uint null = NumParticles;
-
-    uint key = uint(SpatialIndices[i].z);
-    uint keyPrev = i == 0 ? null : uint(SpatialIndices[i-1].z);
+    uint key = uint(SpatialIndices[id].z);
+    uint keyPrev = id == 0 ? 4294967295 : uint(SpatialIndices[id-1].z);
     if(key != keyPrev)
     {
-        SpatialOffsets[key] = uint(i);
+        SpatialOffsets[key] = id;
     }
 
 }
@@ -250,13 +276,44 @@ void calculateOffsets()
 // NOTE: END OF GPU SORT
 
 layout(local_size_x = NumThreads, local_size_y = 1, local_size_z = 1) in;
+void UpdateColors()
+{
+    uint id = gl_GlobalInvocationID.x;
+    if (id >= NumParticles)
+    { 
+        return;
+    }
+
+    float speedNormal = clamp(length(Velocities[id]), 0.0, 1.5) / 1.5;
+
+    float breakpoint1 = 0.33; // 33% of the gradient
+    float breakpoint2 = 0.66; // 66% of the gradient
+
+    // Calculate the colors based on the normalized value
+    if (speedNormal <= breakpoint1) {
+        ReadColors[id] = (1.0f - speedNormal / breakpoint1) * Color1 + (speedNormal / breakpoint1) * Color2;
+    }
+    else if (speedNormal <= breakpoint2) {
+        ReadColors[id] = (1.0f - (speedNormal - breakpoint1) / (breakpoint2 - breakpoint1)) * Color2 +
+            ((speedNormal - breakpoint1) / (breakpoint2 - breakpoint1)) * Color3;
+    }
+    else {
+        ReadColors[id] = (1.0f - (speedNormal - breakpoint2) / (1.0f - breakpoint2)) * Color3 +
+            ((speedNormal - breakpoint2) / (1.0f - breakpoint2)) * Color4;
+    }
+}
+
+layout(local_size_x = NumThreads, local_size_y = 1, local_size_z = 1) in;
 void ExternalForces()
 {
     uint id = gl_GlobalInvocationID.x;
-    if (id >= NumParticles) return;
+    if (id >= NumParticles)
+    { 
+        return;
+    }
 
-    Velocities[id] += vec4(0, gravityScale, 0, 0) * TimeStep;
-    PredictedPositions[id] += vec4(ReadPosAndScale[id].xyz + Velocities[id].xyz * (1.0/120.0), 0.0);
+    Velocities[id] += vec4(0, -gravityScale, 0, 0) * TimeStep;
+    PredictedPositions[id] = vec4(ReadPosAndScale[id].xyz + Velocities[id].xyz * (1.0/120.0), 0.0);
 }
 
 layout(local_size_x = NumThreads, local_size_y = 1, local_size_z = 1) in;
@@ -265,7 +322,7 @@ void SpatialHashUpdate()
     uint id = gl_GlobalInvocationID.x;
     if (id >= NumParticles) return;
 
-    SpatialOffsets[id] = NumParticles;
+    SpatialOffsets[id] = 2147483647;
 
     uint index = id;
     vec3 cell = GetCell3D(PredictedPositions[id].xyz, interactionRadius);
@@ -282,11 +339,33 @@ void CalculateDensities()
     uint id = gl_GlobalInvocationID.x;
     if (id >= NumParticles) return;
 
+    bool debug = id == 0 ? true : false;
+
     vec3 pos = PredictedPositions[id].xyz;
     vec3 originCell = GetCell3D(pos, interactionRadius);
     float sqrRadius = interactionRadius * interactionRadius;
     float density = 0;
     float nearDensity = 0;
+
+    // for(int i = 0; i < NumParticles; i++)
+    // {
+    //     vec3 neighbourPos = PredictedPositions[i].xyz;
+    //     vec3 offsetToNeighbour = neighbourPos - pos;
+    //     float sqrDstToNeighbour = dot(offsetToNeighbour, offsetToNeighbour);
+
+    //     if(sqrDstToNeighbour > sqrRadius)
+    //     {
+    //         continue;
+    //     }
+
+    //     float dst = sqrt(sqrDstToNeighbour);
+    //     density += DensityKernel(dst, interactionRadius);
+    //     nearDensity += NearDensityKernel(dst, interactionRadius);
+    //     if(debug)
+    //     {
+    //         ReadColors[i] = vec4(1.0,0,0,1.0);
+    //     }
+    // }
 
     for(int i = 0; i < 27; i++)
     {
@@ -306,6 +385,7 @@ void CalculateDensities()
             vec3 offsetToNeighbour = neighbourPos - pos;
             float sqrDstToNeighbour = dot(offsetToNeighbour, offsetToNeighbour);
 
+
             if(sqrDstToNeighbour > sqrRadius)
             {
                 continue;
@@ -314,8 +394,16 @@ void CalculateDensities()
             float dst = sqrt(sqrDstToNeighbour);
             density += DensityKernel(dst, interactionRadius);
             nearDensity += NearDensityKernel(dst, interactionRadius);
+
+            if(debug)
+            {
+                ReadColors[neighbourIndex] = vec4(1.0,0,0,1.0);
+                ReadColors[id] = vec4(0.0,1,1,1.0);
+            }
         }
     }
+    //vec3 debugColor = vec3(density / targetDensity);
+    //ReadColors[id] = vec4(debugColor, 1.0);
     Densities[id] = vec2(density, nearDensity);
 }
 
@@ -345,6 +433,32 @@ void CalculatePressureForce()
     vec3 originCell = GetCell3D(pos, interactionRadius);
     float sqrRadius = interactionRadius * interactionRadius;
 
+    // for(int i = 0; i < NumParticles; i++)
+    // {
+    //     uint neighbourIndex = uint(i);
+    //     if(neighbourIndex == id) continue;
+
+    //     vec3 neighbourPos = PredictedPositions[neighbourIndex].xyz;
+    //     vec3 offsetToNeighbour = neighbourPos - pos;
+    //     float sqrDstToNeighbour = dot(offsetToNeighbour, offsetToNeighbour);
+
+    //     if (sqrDstToNeighbour > sqrRadius) continue;
+
+    //     float densityNeighbour = Densities[neighbourIndex].x;
+    //     float nearDensityNeighbour = Densities[neighbourIndex].y;
+    //     float neighbourPressure = pressureFromDensity(densityNeighbour);
+    //     float nearNeighbourPressure = nearPressureFromDensity(nearDensityNeighbour);
+
+    //     float sharedPressure = (pressure + neighbourPressure) / 2;
+    //     float sharedNearPressure = (nearPressure + nearNeighbourPressure) / 2;
+
+    //     float dst = sqrt(sqrDstToNeighbour);
+    //     vec3 dir = dst > 0 ? offsetToNeighbour / dst : vec3(0,1,0);
+
+    //     pressureForce += dir * DensityDerivativeKernal(dst, interactionRadius) * sharedPressure / densityNeighbour;
+    //     pressureForce += dir * NearDensityDerivativeKernal(dst, interactionRadius) * sharedNearPressure / nearDensityNeighbour;
+
+    // }
     for (int i = 0; i < 27; i++)
     {
         uint hash = HashCell3D(originCell + offsets3D[i]);
@@ -362,7 +476,7 @@ void CalculatePressureForce()
             uint neighbourIndex = uint(indexData.x);
             if(neighbourIndex == id) continue;
 
-            vec3 neighbourPos = PredictedPositions[id].xyz;
+            vec3 neighbourPos = PredictedPositions[neighbourIndex].xyz;
             vec3 offsetToNeighbour = neighbourPos - pos;
             float sqrDstToNeighbour = dot(offsetToNeighbour, offsetToNeighbour);
 
@@ -399,6 +513,21 @@ void CalculateViscosity()
     vec3  viscosityForce = vec3(0);
     vec3 velocity = Velocities[id].xyz;
 
+    // for(int i = 0; i < NumParticles; i++)
+    // {
+    //     uint neighbourIndex = i;
+    //     if(neighbourIndex == id) continue;
+    //     vec3 neighbourPos = PredictedPositions[neighbourIndex].xyz;
+    //     vec3 offsetToNeighbour = neighbourPos - pos;
+    //     float sqrDstToNeighbour = dot(offsetToNeighbour, offsetToNeighbour);
+
+    //     if (sqrDstToNeighbour > sqrRadius) continue;
+
+    //     float dst = sqrt(sqrDstToNeighbour);
+    //     vec3 neighbourVelocity = Velocities[neighbourIndex].xyz;
+    //     viscosityForce += (neighbourVelocity - velocity) * SmoothingViscoPoly6(dst, interactionRadius);
+    // }
+
     for (int i = 0; i < 27; i++)
     {
         uint hash = HashCell3D(originCell + offsets3D[i]);
@@ -414,7 +543,7 @@ void CalculateViscosity()
 
             uint neighbourIndex = uint(indexData.x);
             if(neighbourIndex == id) continue;
-            vec3 neighbourPos = PredictedPositions[id].xyz;
+            vec3 neighbourPos = PredictedPositions[neighbourIndex].xyz;
             vec3 offsetToNeighbour = neighbourPos - pos;
             float sqrDstToNeighbour = dot(offsetToNeighbour, offsetToNeighbour);
 
@@ -428,13 +557,13 @@ void CalculateViscosity()
     Velocities[id] += vec4(viscosityForce * viscosityStrength * TimeStep, 0.0);
 }
 
-layout(local_size_x = NumThreads, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = NumThreads, local_size_y = 1, local_size_z = 1) in;
 void UpdatePosition()
 {
     uint id = gl_GlobalInvocationID.x;
     if (id >= NumParticles) return;
 
-    ReadPosAndScale[id] = vec4(Velocities[id].xyz * TimeStep, ReadPosAndScale[id].w);
+    ReadPosAndScale[id] += vec4(Velocities[id].xyz * TimeStep, 0);
     ResolveCollisions(id);
 }
 
@@ -449,28 +578,21 @@ int nextPowerOfTwo(uint n) {
 //layout (local_size_x = NumThreads, local_size_y = 1, local_size_z = 1) in;
 void main() 
 {
-    //TODO: TEST THIS
-
     // Dispatch Kernerls
-    ExternalForces();
+    //ExternalForces();
+    //barrier();
     SpatialHashUpdate();
-    int numStages = int(log2(nextPowerOfTwo(NumParticles)));
-    for(int stageIndex = 0; stageIndex < numStages; stageIndex++)
-    {
-        for(int stepIndex  = 0; stepIndex  < stageIndex + 1; stepIndex++)
-        {
-            groupWidth = 1 << (stageIndex - stepIndex);
-            groupHeight = 2 * groupWidth -1;
-            StepIndex = stepIndex;
-
-            Sort();
-
-        }
-    }
+    //barrier();
+    bitonicSort();
+    //barrier();
     calculateOffsets();
-
+    //barrier();
     CalculateDensities();
-    CalculatePressureForce();
-    CalculateViscosity();
+    //barrier();
+    //CalculatePressureForce();
+    //barrier();
+    //CalculateViscosity();
+    //barrier();
     UpdatePosition();
+    //UpdateColors();
 }

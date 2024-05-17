@@ -142,7 +142,7 @@ namespace Physics
 				{1, 1, -1}, {1, 1, 0}, {1, 1, 1}
 			};
 
-			glm::vec3 BoundScale = { 10, 10, 10 };
+			glm::vec3 BoundScale = { 20, 20, 20 };
 			glm::mat4 boundTransform = glm::mat4(1);
 			glm::quat boundRotation = glm::identity<glm::quat>();
 

@@ -34,7 +34,7 @@
 #include "render/camera.h"
 #include "physics/physicsWorld.h"
 
-#define particleAmount 50000
+#define particleAmount 10240
 
 
 namespace Game
@@ -66,6 +66,8 @@ namespace Game
 			{
 				this->RenderUI();
 			});
+
+			this->window->GetMousePos(MPosX, MPosY);
 
 			return true;
 		}
@@ -127,6 +129,24 @@ namespace Game
 		std::vector<glm::mat4> transforms;
 		transforms.resize(nrParticles);
 
+		std::vector<glm::vec4> vec4ZeroBuffer;
+		std::vector<glm::vec2> vec2ZeroBuffer;
+		std::vector<uint> uintZeroBuffer;
+		vec4ZeroBuffer.resize(nrParticles);
+		vec2ZeroBuffer.resize(nrParticles);
+		uintZeroBuffer.resize(nrParticles);
+
+		std::for_each(std::execution::par, particles.begin(), particles.end(),
+			[this, &vec4ZeroBuffer, &vec2ZeroBuffer, &uintZeroBuffer](uint32_t i)
+		{
+			vec2ZeroBuffer[i] = glm::zero<glm::vec2>();
+			vec4ZeroBuffer[i] = glm::zero<glm::vec4>();
+			uintZeroBuffer[i] = 0;
+		});
+
+
+		
+
 		GLuint bufPositions;
 		GLuint bufColors;
 		GLuint bufPredictedPos;
@@ -176,6 +196,11 @@ namespace Game
 
 		cParticleShader.setVec3("boundSize", Physics::Fluid::FluidSimulation::getInstance().getBounds());
 		cParticleShader.setVec3("centre", glm::vec3(0));
+
+		cParticleShader.setVec4("Color1", Color1);
+		cParticleShader.setVec4("Color2", Color2);
+		cParticleShader.setVec4("Color3", Color3);
+		cParticleShader.setVec4("Color4", Color4);
 		glUseProgram(0);
 		shader.Enable();
 
@@ -183,7 +208,7 @@ namespace Game
 		Cam.Position = { 10, 15, 10 };
 		Cam.Target = { 0,0,0 };
 		Cam.setViewMatrix(true);
-		Cam.shouldTarget = true;
+		Cam.shouldTarget = false;
 		Cam.setViewProjection();
 		shader.setMat4("view", Cam.GetViewMatrix());
 
@@ -196,11 +221,53 @@ namespace Game
 
 			colors.resize(nrParticles);
 			transforms.resize(nrParticles);
+			this->window->GetMousePos(MPosX, MPosY);
+
 
 			// Accept fragment if it closer to the camera than the former one
 			glDepthFunc(GL_LESS);
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			shader.Disable();
+			cParticleShader.use();
+			cParticleShader.setFloat("interactionRadius", Physics::Fluid::FluidSimulation::getInstance().getInteractionRadius());
+			cParticleShader.setFloat("targetDensity", Physics::Fluid::FluidSimulation::getInstance().getDensityTarget());
+			cParticleShader.setFloat("pressureMultiplier", Physics::Fluid::FluidSimulation::getInstance().getPressureMultiplier());
+			cParticleShader.setFloat("nearPressureMultiplier", Physics::Fluid::FluidSimulation::getInstance().getNearPressureMultiplier());
+			cParticleShader.setFloat("viscosityStrength", Physics::Fluid::FluidSimulation::getInstance().getViscosityStrength());
+			cParticleShader.setFloat("gravityScale", Physics::Fluid::FluidSimulation::getInstance().getGravityScale());
+			cParticleShader.setVec3("boundSize", Physics::Fluid::FluidSimulation::getInstance().getBounds());
+			cParticleShader.setVec4("Color1", Color1);
+			cParticleShader.setVec4("Color2", Color2);
+			cParticleShader.setVec4("Color3", Color3);
+			cParticleShader.setVec4("Color4", Color4);
+			glUseProgram(0);
+			shader.Enable();
+
+			if (shouldReset)
+			{
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPositions);
+				glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &Physics::Fluid::FluidSimulation::getInstance().OutPositions[0], GL_DYNAMIC_DRAW);
+
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufColors);
+				glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &colors[0], GL_DYNAMIC_DRAW);
+
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPredictedPos);
+				glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &vec4ZeroBuffer[0], GL_DYNAMIC_DRAW);
+
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufVelocities);
+				glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &vec4ZeroBuffer[0], GL_DYNAMIC_DRAW);
+
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufDensities);
+				glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec2), &vec2ZeroBuffer[0], GL_DYNAMIC_DRAW);
+
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufSpatialIndices);
+				glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &vec4ZeroBuffer[0], GL_DYNAMIC_DRAW);
+
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufSpatialOffsets);
+				glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(uint), &vec2ZeroBuffer[0], GL_DYNAMIC_DRAW);
+				shouldReset = false;
+			}
 
 			if (this->window->ProcessInput(GLFW_KEY_F1))
 			{
@@ -239,7 +306,16 @@ namespace Game
 			{
 				Cam.Move(RenderUtils::DOWN, deltatime);
 			}
-			Cam.setViewMatrix(true);
+
+
+			if (this->window->ProcessInput(GLFW_KEY_LEFT_CONTROL))
+			{
+				Cam.Look(MPosX - LastX, LastY - MPosY);
+			}
+			LastX = MPosX;
+			LastY = MPosY;
+
+			Cam.setViewMatrix(false);
 			shader.setMat4("view", Cam.GetViewMatrix());
 
 			if (this->window->ProcessInput(GLFW_KEY_SPACE) && isRunning)
@@ -252,47 +328,47 @@ namespace Game
 			}
 
 
-			auto simStart = std::chrono::steady_clock::now();
-			if (isRunning)
-			{
-				// RUN UPDATE
-				Physics::Fluid::FluidSimulation::getInstance().Update(deltatime);
+			//auto simStart = std::chrono::steady_clock::now();
+			////if (isRunning)
+			////{
+			////	// RUN UPDATE
+			////	Physics::Fluid::FluidSimulation::getInstance().Update(deltatime);
 
-			}
-			auto simEnd = std::chrono::steady_clock::now();
-			double simElapsed = std::chrono::duration<double>(simEnd - simStart).count() * 1000.0f;
-			Physics::Fluid::FluidSimulation::getInstance().setSimulationTime((float)simElapsed);
+			////}
+			//auto simEnd = std::chrono::steady_clock::now();
+			//double simElapsed = std::chrono::duration<double>(simEnd - simStart).count() * 1000.0f;
+			//Physics::Fluid::FluidSimulation::getInstance().setSimulationTime((float)simElapsed);
 
-			auto colorUpdateStart = std::chrono::steady_clock::now();
+			//auto colorUpdateStart = std::chrono::steady_clock::now();
 			// --------------------------------------------------------------------------------------------
 			// Update Colors and Transition
 			// --------------------------------------------------------------------------------------------
-			std::for_each(std::execution::par, particles.begin(), particles.end(),
-				[this, &colors, &transforms](uint32_t i)
-				{
-				if (colors.size() > nrParticles || i >= nrParticles) return;
-				float normalized = Physics::Fluid::FluidSimulation::getInstance().getSpeedNormalzied(i);
+			//std::for_each(std::execution::par, particles.begin(), particles.end(),
+			//	[this, &colors, &transforms](uint32_t i)
+			//	{
+			//	if (colors.size() > nrParticles || i >= nrParticles) return;
+			//	float normalized = Physics::Fluid::FluidSimulation::getInstance().getSpeedNormalzied(i);
 
-				// Define the breakpoints for color transitions
-				float breakpoint1 = 0.33f; // 33% of the gradient
-				float breakpoint2 = 0.66f; // 66% of the gradient
+			//	// Define the breakpoints for color transitions
+			//	float breakpoint1 = 0.33f; // 33% of the gradient
+			//	float breakpoint2 = 0.66f; // 66% of the gradient
 
-				// Calculate the colors based on the normalized value
-				if (normalized <= breakpoint1) {
-					colors[i] = (1.0f - normalized / breakpoint1) * Color1 + (normalized / breakpoint1) * Color2;
-				}
-				else if (normalized <= breakpoint2) {
-					colors[i] = (1.0f - (normalized - breakpoint1) / (breakpoint2 - breakpoint1)) * Color2 +
-						((normalized - breakpoint1) / (breakpoint2 - breakpoint1)) * Color3;
-				}
-				else {
-					colors[i] = (1.0f - (normalized - breakpoint2) / (1.0f - breakpoint2)) * Color3 +
-						((normalized - breakpoint2) / (1.0f - breakpoint2)) * Color4;
-				}
-				});
+			//	// Calculate the colors based on the normalized value
+			//	if (normalized <= breakpoint1) {
+			//		colors[i] = (1.0f - normalized / breakpoint1) * Color1 + (normalized / breakpoint1) * Color2;
+			//	}
+			//	else if (normalized <= breakpoint2) {
+			//		colors[i] = (1.0f - (normalized - breakpoint1) / (breakpoint2 - breakpoint1)) * Color2 +
+			//			((normalized - breakpoint1) / (breakpoint2 - breakpoint1)) * Color3;
+			//	}
+			//	else {
+			//		colors[i] = (1.0f - (normalized - breakpoint2) / (1.0f - breakpoint2)) * Color3 +
+			//			((normalized - breakpoint2) / (1.0f - breakpoint2)) * Color4;
+			//	}
+			//	});
 			// --------------------------------------------------------------------------------------------
-			auto colorUpdateEnd = std::chrono::steady_clock::now();
-			colorElapsed = std::chrono::duration<double>(colorUpdateEnd - colorUpdateStart).count() * 1000.0f;
+			//auto colorUpdateEnd = std::chrono::steady_clock::now();
+			//colorElapsed = std::chrono::duration<double>(colorUpdateEnd - colorUpdateStart).count() * 1000.0f;
 
 			auto renderStart = std::chrono::steady_clock::now();
 
@@ -300,7 +376,7 @@ namespace Game
 
 			//Compute shader does not work...
 
-			/*if (isRunning)
+			if (isRunning)
 			{
 				cParticleShader.use();
 				cParticleShader.setFloat("TimeStep", deltatime);
@@ -320,16 +396,16 @@ namespace Game
 				};
 
 				glDispatchCompute(numWorkGroups[0], numWorkGroups[1], numWorkGroups[2]);
-			}*/
+			}
 
 			// Particle Drawing
 			particleShader.Enable();
 
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPositions);
-			glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &Physics::Fluid::FluidSimulation::getInstance().OutPositions[0], GL_DYNAMIC_DRAW);
+			//glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPositions);
+			//glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &Physics::Fluid::FluidSimulation::getInstance().OutPositions[0], GL_DYNAMIC_DRAW);
 
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufColors);
-			glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &colors[0], GL_DYNAMIC_DRAW);
+			//glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufColors);
+			//glBufferData(GL_SHADER_STORAGE_BUFFER, nrParticles * sizeof(glm::vec4), &colors[0], GL_DYNAMIC_DRAW);
 
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			glm::mat4 billboardView = glm::mat4(
@@ -385,8 +461,11 @@ namespace Game
 			Cam.setViewProjection();
 			auto renderEnd = std::chrono::steady_clock::now();
 			renderingElapsed = std::chrono::duration<double>(renderEnd - renderStart).count() * 1000.0f;
+			auto colorUpdateStart = std::chrono::steady_clock::now();
 			this->window->SwapBuffers();
 			this->window->Update();
+			auto colorUpdateEnd = std::chrono::steady_clock::now();
+			colorElapsed = std::chrono::duration<double>(colorUpdateEnd - colorUpdateStart).count() * 1000.0f;
 
 			auto timeEnd = std::chrono::steady_clock::now();
 			deltatime = std::min((1.0/2.0), std::chrono::duration<double>(timeEnd - timeStart).count());
@@ -483,7 +562,8 @@ namespace Game
 				if (ImGui::Button("Reset", { 100,25 }))
 				{
 					deltatime = 0.0166667f;
-					Physics::Fluid::FluidSimulation::getInstance().InitializeData(nrParticles);
+					//Physics::Fluid::FluidSimulation::getInstance().InitializeData(nrParticles);
+					shouldReset = true;
 				}
 			}
 
