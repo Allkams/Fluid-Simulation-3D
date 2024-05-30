@@ -38,6 +38,15 @@ All of the Fluid simulation files is in the Engine->Physics folder.
 - [ ] Experiment with Spheretrace rendering for water.
 - [ ] Implement simple lights
 - [ ] Make water reflective.
+- [ ] Make bound rotate.
+- [ ] Possibillity to export and import to 3D softwares like Houdini.
+- [ ] Add liquid presets
+- [ ] Implement a usable UI
+- [ ] Add better movement
+- [ ] Implement input manager
+- [ ] Implement quick reset of shaders
+- [ ] Add possibilities to change from 2D to 3D
+- [ ] Add possibilities to change from CPU to GPU Calculations
 - [X] Dynamic color gradient in water.
 
 ## Bug Reporting  
