@@ -47,6 +47,7 @@ All of the Fluid simulation files is in the Engine->Physics folder.
 - [ ] Implement quick reset of shaders
 - [ ] Add possibilities to change from 2D to 3D
 - [ ] Add possibilities to change from CPU to GPU Calculations
+- [ ] Add possibility to import and export Universal Scene Description(USD) files.
 - [X] Dynamic color gradient in water.
 
 ## Bug Reporting  
