@@ -67,6 +67,7 @@ Would you encounter any bugs within the simulation, please create an issue and r
  - [Smoothed Particle Hydrodynamics techniques for the physics based simulation of fluids and solids](https://sph-tutorial.physics-simulation.org/pdf/SPH_Tutorial.pdf)
  - [Sebastian Lauge Fluid Simulation, Coding adventure](https://www.youtube.com/watch?v=rSKMYc1CQHE)
  - [SPlisHSPlasH](https://github.com/InteractiveComputerGraphics/SPlisHSPlasH)
+ - [OpenUSD](https://openusd.org/docs/)
 
 ## Examples
 Loading Examples ... 
