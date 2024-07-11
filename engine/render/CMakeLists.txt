@@ -1,4 +1,4 @@
-SET(files_render
+SET(files_render_render
 	window.cc
 	window.h
 	RenderBasic.cc
@@ -10,7 +10,23 @@ SET(files_render
 	computeshader.cc
 	computeshader.h
     )
-SOURCE_GROUP("render" FILES ${files_render})
+SOURCE_GROUP("render" FILES ${files_render_render})
+
+SET(files_render_input
+	input/gamepad.h
+	input/gamepad.cc
+	input/inputManager.h
+	input/inputManager.cc
+	input/key.h
+	input/key.cc
+	input/keyboard.h
+	input/mouse.h
+	)
+SOURCE_GROUP("input" FILES ${files_render_input})
+
+SET(files_render
+	${files_render_render}
+	${files_render_input})
 	
 SET(files_pch ../config.h ../config.cc)
 SOURCE_GROUP("pch" FILES ${files_pch})
