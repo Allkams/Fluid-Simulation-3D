@@ -581,13 +581,13 @@ void main()
     // Dispatch Kernerls
     //ExternalForces();
     //barrier();
-    SpatialHashUpdate();
+    //SpatialHashUpdate();
     //barrier();
-    bitonicSort();
+    //bitonicSort();
     //barrier();
-    calculateOffsets();
+    //calculateOffsets();
     //barrier();
-    CalculateDensities();
+    //CalculateDensities();
     //barrier();
     //CalculatePressureForce();
     //barrier();

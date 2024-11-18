@@ -34,11 +34,18 @@
 #include "render/camera.h"
 #include "physics/physicsWorld.h"
 
-#define particleAmount 10240
+#define particleAmount 1024//16384
 
 
 namespace Game
 {
+	int nextPowerOfTwo(uint n) {
+		uint power = 1;
+		while (power < n) {
+			power <<= 1;
+		}
+		return int(power);
+	}
 
 	GameApp::GameApp()
 	{
@@ -56,8 +63,8 @@ namespace Game
 
 		if (window->Open())
 		{
-			//this->window->setSize(1900, 1060);
-			this->window->setSize(2304, 1296);
+			this->window->setSize(1900, 1060);
+			//this->window->setSize(2304, 1296);
 			this->window->setTitle("Fluid Simulation");
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
@@ -82,8 +89,10 @@ namespace Game
 		/*TODO LIST
 		*  - Add comments to code!
 		*  - Implement a GPU Sort somehow...
+		*  - Make sure the particle size is managed by "padding" and dummy particles to be able to use bitonic sort.
 		*  - Make the 3D Bound rotatable when pressing shift
 		*  - Make camera movement when pressing ctrl
+		*  - Clean the shiiet.
 		*/
 
 		glm::vec2 winSize = window->getSize();
@@ -99,7 +108,20 @@ namespace Game
 
 		Shader shader = Shader("./shaders/VertexShader.vs", "./shaders/FragementShader.fs");
 		Shader particleShader = Shader("./shaders/particleRender.vs", "./shaders/particleRender.fs");
+
+		// Load Compute Shaders for simulation
 		Render::ComputeShader cParticleShader = Render::ComputeShader("./shaders/compute_particle.glsl");
+
+		Render::ComputeShader cPredictPositionShader = Render::ComputeShader("./compute/c_PredictPosition.glsl");
+		Render::ComputeShader cSpatialHashShader = Render::ComputeShader("./compute/c_SpatialHash.glsl");
+		Render::ComputeShader cBitonicSortShader = Render::ComputeShader("./compute/c_BitonicSort.glsl");
+		Render::ComputeShader cSpatialOffsetsShader = Render::ComputeShader("./compute/c_SpatialOffsets.glsl");
+		Render::ComputeShader cComputeDensityShader = Render::ComputeShader("./compute/c_ComputeDensity.glsl");
+		//Render::ComputeShader cComputePressureShader = Render::ComputeShader("./compute/c_ComputePressure.glsl");
+		//Render::ComputeShader cComputeViscosityShader = Render::ComputeShader("./compute/c_ComputeViscosity.glsl");
+		//Render::ComputeShader cUpdatePositionShader = Render::ComputeShader("./compute/c_UpdatePositions.glsl");
+
+		// END OF "Load Compute Shaders for simulation"
 		
 		shader.Enable();
 
@@ -201,8 +223,30 @@ namespace Game
 		cParticleShader.setVec4("Color2", Color2);
 		cParticleShader.setVec4("Color3", Color3);
 		cParticleShader.setVec4("Color4", Color4);
+
+		cPredictPositionShader.use();
+		cPredictPositionShader.setInt("NumParticles", nrParticles);
+		cPredictPositionShader.setFloat("gravityScale", Physics::Fluid::FluidSimulation::getInstance().getGravityScale());
+
+		cSpatialHashShader.use();
+		cSpatialHashShader.setInt("NumParticles", nrParticles);
+		cSpatialHashShader.setFloat("interactionRadius", Physics::Fluid::FluidSimulation::getInstance().getInteractionRadius());
+
+
+		cBitonicSortShader.use();
+		cBitonicSortShader.setInt("NumParticles", nrParticles);
+
+		cSpatialOffsetsShader.use();
+		cSpatialOffsetsShader.setInt("NumParticles", nrParticles);
+
+		cComputeDensityShader.use();
+		cComputeDensityShader.setInt("NumParticles", nrParticles);
+		cComputeDensityShader.setFloat("interactionRadius", Physics::Fluid::FluidSimulation::getInstance().getInteractionRadius());
+
 		glUseProgram(0);
 		shader.Enable();
+
+
 
 		//Cam.Position = { 20, 0, 0 };
 		Cam.Position = { 10, 15, 10 };
@@ -211,6 +255,12 @@ namespace Game
 		Cam.shouldTarget = false;
 		Cam.setViewProjection();
 		shader.setMat4("view", Cam.GetViewMatrix());
+
+		const int numWorkGroups[3] = {
+		nrParticles / 1024,
+		1,
+		1
+			};
 
 		deltatime = 0.016667f;
 		while (this->window->IsOpen())
@@ -241,6 +291,9 @@ namespace Game
 			cParticleShader.setVec4("Color2", Color2);
 			cParticleShader.setVec4("Color3", Color3);
 			cParticleShader.setVec4("Color4", Color4);
+
+			cPredictPositionShader.use();
+			cPredictPositionShader.setFloat("gravityScale", Physics::Fluid::FluidSimulation::getInstance().getGravityScale());
 			glUseProgram(0);
 			shader.Enable();
 
@@ -308,7 +361,7 @@ namespace Game
 			}
 
 
-			if (this->window->ProcessInput(GLFW_KEY_LEFT_CONTROL))
+			if (this->window->ProcessInput(GLFW_KEY_LEFT_SHIFT))
 			{
 				Cam.Look(MPosX - LastX, LastY - MPosY);
 			}
@@ -378,9 +431,6 @@ namespace Game
 
 			if (isRunning)
 			{
-				cParticleShader.use();
-				cParticleShader.setFloat("TimeStep", deltatime);
-
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, bufPositions);
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, bufColors);
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, bufPredictedPos);
@@ -389,13 +439,47 @@ namespace Game
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, bufSpatialIndices);
 				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, bufSpatialOffsets);
 
-				const int numWorkGroups[3] = {
-					nrParticles / 1024,
-					1,
-					1
-				};
-
+				cPredictPositionShader.use();
+				cPredictPositionShader.setFloat("TimeStep", deltatime);
 				glDispatchCompute(numWorkGroups[0], numWorkGroups[1], numWorkGroups[2]);
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+				cSpatialHashShader.use();
+				glDispatchCompute(numWorkGroups[0], numWorkGroups[1], numWorkGroups[2]);
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+				cBitonicSortShader.use();
+				int numStages = (int)log2f(nextPowerOfTwo(nrParticles));
+				for (int stage = 1; stage <= numStages; stage++) {
+					for (int passOfStage = 0; passOfStage < stage; passOfStage++) {
+						// Update uniforms
+						int groupWidth = 1 << (stage - passOfStage);
+						int groupHeight = 2 * groupWidth - 1;
+
+						cBitonicSortShader.setInt("groupWidth", groupWidth);
+						cBitonicSortShader.setInt("groupHeight", groupHeight);
+						cBitonicSortShader.setInt("StepIndex", stage);
+
+						// Dispatch compute shader
+						glDispatchCompute(nextPowerOfTwo(nrParticles) / 2, 1, 1);
+						glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+					}
+				}
+
+				cSpatialOffsetsShader.use();
+				glDispatchCompute(numWorkGroups[0], numWorkGroups[1], numWorkGroups[2]);
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+				cComputeDensityShader.use();
+				glDispatchCompute(numWorkGroups[0], numWorkGroups[1], numWorkGroups[2]);
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+				cParticleShader.use();
+				cParticleShader.setFloat("TimeStep", deltatime);
+				glDispatchCompute(numWorkGroups[0], numWorkGroups[1], numWorkGroups[2]);
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+
 			}
 
 			// Particle Drawing
@@ -481,6 +565,7 @@ namespace Game
 
 		return true;
 	}
+
 
 	bool GameApp::Close()
 	{
