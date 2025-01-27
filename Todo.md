@@ -15,4 +15,5 @@
 - [ ] Make a defered renderer
 - [ ] Make a cluster renderer
 - [ ] Make a ... Renderer
+- [ ] Push a release exe
 - [ ] Add more todos
