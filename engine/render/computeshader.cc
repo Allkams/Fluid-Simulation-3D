@@ -3,6 +3,8 @@
 
 namespace Render
 {
+	ComputeShader::ComputeShader()
+	{}
 	ComputeShader::ComputeShader(const char* computePath)
 	{
 		std::string  computeCode;

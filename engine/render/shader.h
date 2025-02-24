@@ -32,6 +32,7 @@ public:
 	std::string fsPath = "";
 	GLuint ID;
 
+	Shader(){};
 	Shader(const char* vsPath, const char* fsPath);
 	
 	void Destroy();

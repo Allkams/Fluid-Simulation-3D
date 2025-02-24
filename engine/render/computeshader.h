@@ -13,6 +13,7 @@ namespace Render
 	public:
 		unsigned int ID;
 
+        ComputeShader();
         ComputeShader(const char* computePath);
 
         void use()

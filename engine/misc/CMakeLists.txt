@@ -1,5 +1,5 @@
 SET(files_misc
-	temp.cc
+	ConfigLoader.cc
 	temp.h
     )
 SOURCE_GROUP("misc" FILES ${files_misc})
