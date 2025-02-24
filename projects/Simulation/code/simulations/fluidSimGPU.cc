@@ -24,13 +24,6 @@ void FluidSimGPU::initialize(int particleAmount)
 	Particles.resize(particleAmount);
 	colors.resize(particleAmount); // Something happens here...
 
-	//std::for_each(std::execution::par, Particles.begin(), Particles.end(),
-	//	[this](uint32_t i)
-	//{
-	//	colors[i] = Color1;
-	//});
-	//-----
-
 	numWorkGroups[0] = particleAmount / 1024;
 
 	glGenBuffers(1, &bufPositions);
@@ -42,7 +35,7 @@ void FluidSimGPU::initialize(int particleAmount)
 	glGenBuffers(1, &bufSpatialOffsets);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufPositions);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, particleAmount * sizeof(glm::vec4), &Physics::Fluid::FluidSimulation::getInstance().OutPositions[0], GL_DYNAMIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, particleAmount * sizeof(glm::vec4), NULL, GL_DYNAMIC_DRAW);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufColors);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, particleAmount * sizeof(glm::vec4), &colors[0], GL_DYNAMIC_DRAW);
@@ -208,6 +201,39 @@ void FluidSimGPU::cleanup()
 	glDeleteBuffers(1, &bufDensities);
 	glDeleteBuffers(1, &bufSpatialIndices);
 	glDeleteBuffers(1, &bufSpatialOffsets);
+}
+
+void FluidSimGPU::render(Shader& renderShader, RenderUtils::Camera& cam)
+{
+	renderShader.Enable();
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glm::mat4 billboardView = glm::mat4(
+		{ 1, 0, 0, 0 },
+		{ 0, 1, 0, 0 },
+		{ 0, 0, 1, 0 },
+		cam.GetViewMatrix()[3]
+	);
+	glm::mat4 billboardViewProjection = cam.GetProjection() * billboardView;
+	cam.setViewProjection();
+	renderShader.setMat4("ViewProj", cam.GetViewProjection());
+	renderShader.setMat4("BillBoardViewProj", billboardViewProjection);
+	GLuint particleOffsetLoc = glGetUniformLocation(renderShader.GetProgram(), "ParticleOffset");
+
+	int numVerts = nrParticles * 6;
+	const int numVertsPerDrawCall = 0x44580; // has to be divisible with 6
+	int numDrawCalls = (1024 / numVertsPerDrawCall) + 1;
+	int particleOffset = 0;
+	while (numVerts > 0)
+	{
+		int drawVertCount = glm::min(numVerts, numVertsPerDrawCall);
+		glUniform1i(particleOffsetLoc, particleOffset);
+		glDrawArrays(GL_TRIANGLES, 0, drawVertCount);
+		numVerts -= drawVertCount;
+		particleOffset += drawVertCount / 6;
+	}
+
+	renderShader.Disable();
 }
 
 FluidSimGPU::FluidSimGPU()

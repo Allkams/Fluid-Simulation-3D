@@ -113,28 +113,27 @@ namespace Physics
 		{
 			numParticles = particleAmmount;
 
-			if (positions.size() > 0)
-			{
-				positions.clear();
-				velocity.clear();
-				predictedPositions.clear();
-				densities.clear();
-				pList.clear();
-			}
-
+			pList.resize(particleAmmount);
 			for (int i = 0; i < particleAmmount; i++)
 			{
-				pList.push_back(i);
+				pList[i] = i;
 			}
 
-			for (int i = 0; i < particleAmmount; i++)
+			positions.resize(particleAmmount);
+			OutPositions.resize(particleAmmount);
+			velocity.resize(particleAmmount);
+			velocity2.resize(particleAmmount);
+			predictedPositions.resize(particleAmmount);
+			densities.resize(particleAmmount);
+
+			for (size_t i = 0; i < particleAmmount; i++)
 			{
-				positions.push_back({ 0,0,0 });
-				OutPositions.push_back({ 0,0,0, 0.25f });
-				velocity.push_back({ 0,0,0 });
-				velocity2.push_back({ 0,0,0 });
-				predictedPositions.push_back({ 0,0,0 });
-				densities.push_back({ 0,0 });
+				positions[i] = glm::zero<glm::vec3>();
+				OutPositions[i] = { 0,0,0, 0.25f };
+				velocity[i] = glm::zero<glm::vec3>();
+				velocity2[i] = glm::zero<glm::vec3>();
+				predictedPositions[i] = glm::zero<glm::vec3>();
+				densities[i] = glm::zero<glm::vec2>();
 			}
 
 			int RowSize = ceil(powf(particleAmmount, (1.0f / 3.0f)));
@@ -362,7 +361,6 @@ namespace Physics
 					NearDensity += kernels::SmoothingPow3(dist, interactionRadius);
 				}
 			}
-
 			return { density, NearDensity };
 		}
 

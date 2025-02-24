@@ -12,12 +12,13 @@ public:
 	void reset() override;
 	void updateGPUBufferData();
 	void cleanup() override;
+	void render(Shader& renderShader,RenderUtils::Camera& cam) override;
 	FluidSimGPU();
 
 private:
 	int nrParticles;
 	int numWorkGroups[3] = {1,1,1};
-	std::vector<int> Particles;
+	std::vector<bool> Particles;
 	std::vector<glm::vec4> colors;
 
 	GLuint bufPositions;
